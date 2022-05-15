@@ -3,7 +3,6 @@
 import datetime
 
 import pytest
-from six import string_types
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
@@ -805,7 +804,7 @@ class TestTimeFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_time_equality(self, session, is_sqlite, value):
-        if isinstance(value, string_types) and is_sqlite:
+        if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
         query = session.query(Qux)
@@ -826,7 +825,7 @@ class TestTimeFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_multiple_times(self, session, is_sqlite, value):
-        if isinstance(value, string_types) and is_sqlite:
+        if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
         query = session.query(Qux)
@@ -867,7 +866,7 @@ class TestDateTimeFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_datetime_equality(self, session, is_sqlite, value):
-        if isinstance(value, string_types) and is_sqlite:
+        if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
         query = session.query(Qux)
@@ -895,7 +894,7 @@ class TestDateTimeFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_multiple_datetimes(self, session, is_sqlite, value):
-        if isinstance(value, string_types) and is_sqlite:
+        if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
         query = session.query(Qux)

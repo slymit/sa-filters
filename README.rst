@@ -1,10 +1,11 @@
 sa-filters
 ==========
 
-.. pull-quote::
 
-    Filter, sort and paginate SQLAlchemy query objects. Ideal for
-    exposing these actions over a REST API.
+Filter, sort and paginate SQLAlchemy query objects. Ideal for
+exposing these actions over a REST API.
+
+This project is fork of sqlalchemy-filters_ with sqlalchemy 1.4 support.
 
 
 .. image:: https://img.shields.io/pypi/v/sa-filters.svg
@@ -487,19 +488,10 @@ The following RDBMS are supported (tested):
 - PostgreSQL
 
 
-Python 2
---------
-
-There is no active support for Python 2. However, it is compatible as of
-February 2019, if you install ``funcsigs``, included in the ``python2``
-extra requirements.
-
-
 SQLAlchemy support
 ------------------
 
-The following SQLAlchemy_ versions are supported: ``1.0``, ``1.1``,
-``1.2``, ``1.3``.
+The following SQLAlchemy_ versions are supported: ``1.4``.
 
 
 Changelog
@@ -516,6 +508,7 @@ Apache 2.0. See `LICENSE <https://github.com/slymit/sa-filters/blob/master/LICEN
 for details.
 
 
+.. _sqlalchemy-filters: https://github.com/juliotrigo/sqlalchemy-filters
 .. _SQLAlchemy: https://www.sqlalchemy.org/
 .. _hybrid attribute: https://docs.sqlalchemy.org/en/13/orm/extensions/hybrid.html
 .. _hybrid property: https://docs.sqlalchemy.org/en/13/orm/extensions/hybrid.html#sqlalchemy.ext.hybrid.hybrid_property

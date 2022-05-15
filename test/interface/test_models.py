@@ -33,6 +33,13 @@ class TestGetQueryModels(object):
 
         assert {'Bar': Bar} == entities
 
+    def test_query_with_select_from_and_join_model(self, session):
+        query = session.query().select_from(Bar).join(Foo)
+
+        entities = get_query_models(query)
+
+        assert {'Bar': Bar, 'Foo': Foo} == entities
+
     def test_query_with_multiple_models(self, session):
         query = session.query(Bar, Qux)
 
@@ -132,7 +139,7 @@ class TestGetModelClassByName:
 
     @pytest.fixture
     def registry(self):
-        return Base._decl_class_registry
+        return Base.registry._class_registry
 
     def test_exists(self, registry):
         assert get_model_class_by_name(registry, 'Foo') == Foo
