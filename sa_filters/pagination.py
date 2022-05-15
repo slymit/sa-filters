@@ -2,7 +2,7 @@
 import math
 from collections import namedtuple
 
-from sqlalchemy_filters.exceptions import InvalidPage
+from .exceptions import InvalidPage
 
 
 def apply_pagination(query, page_number=None, page_size=None):

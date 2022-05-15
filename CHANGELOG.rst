@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-Here you can see the full list of changes between sqlalchemy-filters
+Here you can see the full list of changes between sa-filters
 versions, where semantic versioning is used: *major.minor.patch*.
 
 

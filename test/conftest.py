@@ -18,10 +18,10 @@ def pytest_addoption(parser):
         '--sqlite-test-db-uri',
         action='store',
         dest=SQLITE_TEST_DB_URI,
-        default='sqlite+pysqlite:///test_sqlalchemy_filters.db',
+        default='sqlite+pysqlite:///test_sa_filters.db',
         help=(
             'DB uri for testing (e.g. '
-            '"sqlite+pysqlite:///test_sqlalchemy_filters.db")'
+            '"sqlite+pysqlite:///test_sa_filters.db")'
         )
     )
 
@@ -31,12 +31,12 @@ def pytest_addoption(parser):
         dest=MYSQL_TEST_DB_URI,
         default=(
             'mysql+mysqlconnector://root:@localhost:3306'
-            '/test_sqlalchemy_filters'
+            '/test_sa_filters'
         ),
         help=(
             'DB uri for testing (e.g. '
             '"mysql+mysqlconnector://username:password@localhost:3306'
-            '/test_sqlalchemy_filters")'
+            '/test_sa_filters")'
         )
     )
 
@@ -46,12 +46,12 @@ def pytest_addoption(parser):
         dest=POSTGRESQL_TEST_DB_URI,
         default=(
             'postgresql+psycopg2://postgres:@localhost:5432'
-            '/test_sqlalchemy_filters?client_encoding=utf8'
+            '/test_sa_filters?client_encoding=utf8'
         ),
         help=(
             'DB uri for testing (e.g. '
             '"postgresql+psycopg2://username:password@localhost:5432'
-            '/test_sqlalchemy_filters?client_encoding=utf8")'
+            '/test_sa_filters?client_encoding=utf8")'
         )
     )
 

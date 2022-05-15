@@ -1,5 +1,5 @@
-SQLAlchemy filters
-==================
+sa-filters
+==========
 
 .. pull-quote::
 
@@ -7,17 +7,17 @@ SQLAlchemy filters
     exposing these actions over a REST API.
 
 
-.. image:: https://img.shields.io/pypi/v/sqlalchemy-filters.svg
-    :target: https://pypi.org/project/sqlalchemy-filters/
+.. image:: https://img.shields.io/pypi/v/sa-filters.svg
+    :target: https://pypi.org/project/sa-filters/
 
-.. image:: https://img.shields.io/pypi/pyversions/sqlalchemy-filters.svg
-    :target: https://pypi.org/project/sqlalchemy-filters/
+.. image:: https://img.shields.io/pypi/pyversions/sa-filters.svg
+    :target: https://pypi.org/project/sa-filters/
 
-.. image:: https://img.shields.io/pypi/format/sqlalchemy-filters.svg
-    :target: https://pypi.org/project/sqlalchemy-filters/
+.. image:: https://img.shields.io/pypi/format/sa-filters.svg
+    :target: https://pypi.org/project/sa-filters/
 
-.. image:: https://travis-ci.org/juliotrigo/sqlalchemy-filters.svg?branch=master
-    :target: https://travis-ci.org/juliotrigo/sqlalchemy-filters
+.. image:: https://travis-ci.org/slymit/sa-filters.svg?branch=master
+    :target: https://travis-ci.org/slymit/sa-filters
 
 
 Filtering
@@ -60,7 +60,7 @@ Then we can apply filters to that ``query`` object (multiple times):
 
 .. code-block:: python
 
-    from sqlalchemy_filters import apply_filters
+    from sa_filters import apply_filters
 
 
     # `query` should be a SQLAlchemy query object
@@ -243,7 +243,7 @@ Sort
 
 .. code-block:: python
 
-    from sqlalchemy_filters import apply_sort
+    from sa_filters import apply_sort
 
 
     # `query` should be a SQLAlchemy query object
@@ -275,7 +275,7 @@ Pagination
 
 .. code-block:: python
 
-    from sqlalchemy_filters import apply_pagination
+    from sa_filters import apply_pagination
 
 
     # `query` should be a SQLAlchemy query object
@@ -433,9 +433,9 @@ run the tests, with the following URIs:
 
 .. code-block:: shell
 
-    sqlite+pysqlite:///test_sqlalchemy_filters.db
-    mysql+mysqlconnector://root:@localhost:3306/test_sqlalchemy_filters
-    postgresql+psycopg2://postgres:@localhost:5432/test_sqlalchemy_filters?client_encoding=utf8'
+    sqlite+pysqlite:///test_sa_filters.db
+    mysql+mysqlconnector://root:@localhost:3306/test_sa_filters
+    postgresql+psycopg2://postgres:@localhost:5432/test_sa_filters?client_encoding=utf8'
 
 A test database will be created, used during the tests and destroyed
 afterwards for each RDBMS configured.
@@ -469,11 +469,11 @@ dependencies will have to be installed:
     $ make coverage
 
     $ # overriding DB parameters
-    $ ARGS='--mysql-test-db-uri mysql+mysqlconnector://root:@192.168.99.100:3340/test_sqlalchemy_filters' make test
-    $ ARGS='--sqlite-test-db-uri sqlite+pysqlite:///test_sqlalchemy_filters.db' make test
+    $ ARGS='--mysql-test-db-uri mysql+mysqlconnector://root:@192.168.99.100:3340/test_sa_filters' make test
+    $ ARGS='--sqlite-test-db-uri sqlite+pysqlite:///test_sa_filters.db' make test
 
-    $ ARGS='--mysql-test-db-uri mysql+mysqlconnector://root:@192.168.99.100:3340/test_sqlalchemy_filters' make coverage
-    $ ARGS='--sqlite-test-db-uri sqlite+pysqlite:///test_sqlalchemy_filters.db' make coverage
+    $ ARGS='--mysql-test-db-uri mysql+mysqlconnector://root:@192.168.99.100:3340/test_sa_filters' make coverage
+    $ ARGS='--sqlite-test-db-uri sqlite+pysqlite:///test_sa_filters.db' make coverage
 
 
 
@@ -505,14 +505,14 @@ The following SQLAlchemy_ versions are supported: ``1.0``, ``1.1``,
 Changelog
 ---------
 
-Consult the `CHANGELOG <https://github.com/juliotrigo/sqlalchemy-filters/blob/master/CHANGELOG.rst>`_
+Consult the `CHANGELOG <https://github.com/slymit/sa-filters/blob/master/CHANGELOG.rst>`_
 document for fixes and enhancements of each version.
 
 
 License
 -------
 
-Apache 2.0. See `LICENSE <https://github.com/juliotrigo/sqlalchemy-filters/blob/master/LICENSE>`_
+Apache 2.0. See `LICENSE <https://github.com/slymit/sa-filters/blob/master/LICENSE>`_
 for details.
 
 

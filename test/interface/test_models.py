@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from sqlalchemy_filters.exceptions import BadSpec, BadQuery
-from sqlalchemy_filters.models import (
+from sa_filters.exceptions import BadSpec, BadQuery
+from sa_filters.models import (
     auto_join, get_default_model, get_query_models, get_model_class_by_name,
     get_model_from_spec
 )

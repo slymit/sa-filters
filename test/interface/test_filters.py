@@ -7,8 +7,8 @@ from six import string_types
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from sqlalchemy_filters import apply_filters
-from sqlalchemy_filters.exceptions import (
+from sa_filters import apply_filters
+from sa_filters.exceptions import (
     BadFilterFormat, BadSpec, FieldNotFound
 )
 

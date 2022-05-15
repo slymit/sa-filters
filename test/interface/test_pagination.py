@@ -4,8 +4,8 @@ from collections import namedtuple
 
 import pytest
 
-from sqlalchemy_filters import apply_pagination
-from sqlalchemy_filters.exceptions import InvalidPage
+from sa_filters import apply_pagination
+from sa_filters.exceptions import InvalidPage
 from test import error_value
 from test.models import Bar
 
