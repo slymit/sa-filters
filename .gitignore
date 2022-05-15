@@ -4,9 +4,14 @@ __pycache__/
 
 # Distribution / packaging
 *.egg-info/
+build/
+dist/
 
 # Unit test / coverage reports
 .coverage
 .coverage.*
 .cache
 .tox
+
+# idea folder
+.idea
