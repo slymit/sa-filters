@@ -18,6 +18,8 @@ setup(
     long_description_content_type='text/x-rst',
     author='Student.com',
     author_email='wearehiring@student.com',
+    maintainer='slymit',
+    maintainer_email='slymit@gmail.com',
     url='https://github.com/slymit/sa-filters',
     packages=find_packages(exclude=['test', 'test.*']),
     install_requires=['sqlalchemy>=1.4.0'],
