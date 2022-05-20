@@ -17,8 +17,8 @@ This project is fork of sqlalchemy-filters_ with sqlalchemy 1.4 support.
 .. image:: https://img.shields.io/pypi/format/sa-filters.svg
     :target: https://pypi.org/project/sa-filters/
 
-.. image:: https://travis-ci.org/slymit/sa-filters.svg?branch=master
-    :target: https://travis-ci.org/slymit/sa-filters
+.. image:: https://github.com/slymit/sa-filters/actions/workflows/ci.yml/badge.svg?branch=main
+    :target: https://github.com/slymit/sa-filters/actions
 
 
 Filtering
