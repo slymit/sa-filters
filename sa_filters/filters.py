@@ -185,10 +185,12 @@ def get_named_models(filters):
 
 
 def apply_filters(query, filter_spec, do_auto_join=True):
-    """Apply filters to a SQLAlchemy query.
+    """Apply filters to a SQLAlchemy query or Select object.
 
     :param query:
-        A :class:`sqlalchemy.orm.Query` instance.
+        The statement to be processed. May be one of:
+        a :class:`sqlalchemy.orm.Query` instance or
+        a :class:`sqlalchemy.sql.expression.Select` instance.
 
     :param filter_spec:
         A dict or an iterable of dicts, where each one includes
@@ -216,8 +218,9 @@ def apply_filters(query, filter_spec, do_auto_join=True):
             }
 
     :returns:
-        The :class:`sqlalchemy.orm.Query` instance after all the filters
-        have been applied.
+        The :class:`sqlalchemy.orm.Query` or
+        the :class:`sqlalchemy.sql.expression.Select`
+        instance after all the filters have been applied.
     """
     filters = build_filters(filter_spec)
 

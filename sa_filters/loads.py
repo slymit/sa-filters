@@ -45,7 +45,8 @@ def get_named_models(loads):
 
 
 def apply_loads(query, load_spec):
-    """Apply load restrictions to a :class:`sqlalchemy.orm.Query` instance.
+    """Apply load restrictions to a :class:`sqlalchemy.orm.Query` instance
+    or a :class:`sqlalchemy.sql.expression.Select` instance.
 
     :param load_spec:
         A list of dictionaries, where each item contains the fields to load
@@ -65,8 +66,9 @@ def apply_loads(query, load_spec):
             load_spec = ['id', 'name']
 
     :returns:
-        The :class:`sqlalchemy.orm.Query` instance after the load restrictions
-        have been applied.
+        The :class:`sqlalchemy.orm.Query` instance or
+        a :class:`sqlalchemy.sql.expression.Select` instance
+        after the load restrictions have been applied.
     """
     if (
         isinstance(load_spec, list) and

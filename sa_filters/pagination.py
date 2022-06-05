@@ -2,11 +2,14 @@
 import math
 from collections import namedtuple
 
+from sqlalchemy import select, func
+from sqlalchemy.orm import Query
+
 from .exceptions import InvalidPage
 
 
-def apply_pagination(query, page_number=None, page_size=None):
-    """Apply pagination to a SQLAlchemy query object.
+def apply_pagination(query, page_number=None, page_size=None, session=None):
+    """Apply pagination to a SQLAlchemy query or Select object.
 
     :param page_number:
         Page to be returned (starts and defaults to 1).
@@ -16,8 +19,8 @@ def apply_pagination(query, page_number=None, page_size=None):
         to the total results).
 
     :returns:
-        A 2-tuple with the paginated SQLAlchemy query object and
-        a pagination namedtuple.
+        A 2-tuple with the paginated SQLAlchemy query or Select object
+        and a pagination namedtuple.
 
         The pagination object contains information about the results
         and pages: ``page_size`` (defaults to ``total_results``),
@@ -39,7 +42,7 @@ def apply_pagination(query, page_number=None, page_size=None):
         22
         >>> page_size, page_number, num_pages, total_results = pagination
     """
-    total_results = query.count()
+    total_results = _calculate_total_results(query, session)
     query = _limit(query, page_size)
 
     # Page size defaults to total results
@@ -90,3 +93,12 @@ def _calculate_num_pages(page_number, page_size, total_results):
         return 0
 
     return math.ceil(float(total_results) / float(page_size))
+
+
+def _calculate_total_results(query, session):
+    if isinstance(query, Query):
+        return query.count()
+
+    return session.execute(
+        select(func.count()).select_from(query.subquery())
+    ).scalar_one()

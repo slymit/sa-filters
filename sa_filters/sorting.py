@@ -68,7 +68,8 @@ def get_named_models(sorts):
 
 
 def apply_sort(query, sort_spec):
-    """Apply sorting to a :class:`sqlalchemy.orm.Query` instance.
+    """Apply sorting to a :class:`sqlalchemy.orm.Query` instance or
+    a :class:`sqlalchemy.sql.expression.Select` instance.
 
     :param sort_spec:
         A list of dictionaries, where each one of them includes
@@ -97,7 +98,8 @@ def apply_sort(query, sort_spec):
         may be omitted from the sort spec.
 
     :returns:
-        The :class:`sqlalchemy.orm.Query` instance after the provided
+        The :class:`sqlalchemy.orm.Query` instance or
+        the :class:`sqlalchemy.sql.expression.Select` after the provided
         sorting has been applied.
     """
     if isinstance(sort_spec, dict):

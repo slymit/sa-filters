@@ -5,7 +5,8 @@ sa-filters
 Filter, sort and paginate SQLAlchemy query objects. Ideal for
 exposing these actions over a REST API.
 
-This project is fork of sqlalchemy-filters_ with sqlalchemy 1.4 support.
+This project is fork of sqlalchemy-filters_ with sqlalchemy 1.4 support
+and other improvements.
 
 
 .. image:: https://img.shields.io/pypi/v/sa-filters.svg
@@ -64,7 +65,7 @@ Then we can apply filters to that ``query`` object (multiple times):
     from sa_filters import apply_filters
 
 
-    # `query` should be a SQLAlchemy query object
+    # `query` should be a SQLAlchemy query or Select object
 
     filter_spec = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
     filtered_query = apply_filters(query, filter_spec)
@@ -247,7 +248,7 @@ Sort
     from sa_filters import apply_sort
 
 
-    # `query` should be a SQLAlchemy query object
+    # `query` should be a SQLAlchemy query or Select object
 
     sort_spec = [
         {'model': 'Foo', 'field': 'name', 'direction': 'asc'},
@@ -279,7 +280,7 @@ Pagination
     from sa_filters import apply_pagination
 
 
-    # `query` should be a SQLAlchemy query object
+    # `query` should be a SQLAlchemy query or Select object
 
     query, pagination = apply_pagination(query, page_number=1, page_size=10)
 
@@ -290,6 +291,29 @@ Pagination
     assert 1 == page_number == pagination.page_number
     assert 3 == num_pages == pagination.num_pages
     assert 22 == total_results == pagination.total_results
+
+Select object
+-------------
+You can use ``apply_filters``, ``apply_loads``, ``apply_sort`` and ``apply_pagination``
+with SQLAlchemy ``Select`` object:
+
+.. code-block:: python
+
+    stmt = select(Foo)
+
+    filter_spec = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
+    filtered_stmt = apply_filters(stmt, filter_spec)
+
+    result = session.execute(filtered_stmt).scalars().all()
+
+Note that when using ``apply_pagination`` with ``Select`` object,
+you must pass session argument:
+
+.. code-block:: python
+
+    stmt = select(Foo)
+
+    query, pagination = apply_pagination(stmt, page_number=1, page_size=10, session=session)
 
 Filters format
 --------------

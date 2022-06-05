@@ -1,6 +1,8 @@
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import mapperlib
+from sqlalchemy.orm import mapperlib, Query
+from sqlalchemy.sql.util import find_tables
+from sqlalchemy import Table
 from sqlalchemy.util import symbol
 import types
 
@@ -70,30 +72,21 @@ def get_query_models(query):
     :returns:
         A dictionary with all the models included in the query.
     """
-    models = [col_desc['entity'] for col_desc in query.column_descriptions]
+    if isinstance(query, Query):
+        stmt = query.statement
+    else:
+        stmt = query
 
-    try:
-        models.extend(
-            mapper.class_
-            for mapper
-            in query._compile_state()._join_entities
-        )
-    except InvalidRequestError:
-        # query might not contain columns yet, hence cannot be compiled
-        # try to infer the models from various internals
-        for table_tuple in query._setup_joins + query._legacy_setup_joins:
-            model_class = get_model_from_table(table_tuple[0])
-            if model_class:
-                models.append(model_class)
+    tables = find_tables(stmt, check_columns=True, include_joins=True)
+    models = []
 
-    # account also query.select_from entities
-    model_class = None
-    if query._from_obj:
-        model_class = get_model_from_table(query._from_obj[0])
-    if model_class and (model_class not in models):
-        models.append(model_class)
+    for t in tables:
+        if isinstance(t, Table):
+            model = get_model_from_table(t)
+            if model not in models:
+                models.append(model)
 
-    return {model.__name__: model for model in models}
+    return {model.__name__: model for model in models if model}
 
 
 def get_model_from_spec(spec, query, default_model=None):
@@ -179,7 +172,10 @@ def auto_join(query, *model_names):
                 # Many Core and ORM statement objects now perform much of
                 # their construction and validation in the compile phase
                 tmp = query.join(model)
-                tmp._compile_state()
+                if isinstance(query, Query):
+                    tmp.statement.compile()
+                else:
+                    tmp.compile()
                 query = tmp
             except InvalidRequestError:
                 pass  # can't be autojoined
