@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from sqlalchemy import select, LABEL_STYLE_TABLENAME_PLUS_COL
 from sqlalchemy.orm import joinedload
 
 from sa_filters import apply_loads
@@ -32,31 +33,31 @@ class TestLoadNotApplied(object):
 
     @pytest.mark.parametrize('spec', [1, []])
     def test_wrong_spec_format(self, session, spec):
-        query = session.query(Bar)
+        stmt = select(Bar)
         load_spec = [spec]
 
         with pytest.raises(BadLoadFormat) as err:
-            apply_loads(query, load_spec)
+            apply_loads(stmt, load_spec)
 
         expected_error = 'Load spec `{}` should be a dictionary.'.format(spec)
         assert expected_error == error_value(err)
 
     def test_field_not_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         load_spec = [{}]
 
         with pytest.raises(BadLoadFormat) as err:
-            apply_loads(query, load_spec)
+            apply_loads(stmt, load_spec)
 
         expected_error = '`fields` is a mandatory attribute.'
         assert expected_error == error_value(err)
 
     def test_invalid_field(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         load_spec = [{'fields': ['invalid_field']}]
 
         with pytest.raises(FieldNotFound) as err:
-            apply_loads(query, load_spec)
+            apply_loads(stmt, load_spec)
 
         expected_error = (
             "Model <class 'test.models.Bar'> has no column `invalid_field`."
@@ -67,10 +68,10 @@ class TestLoadNotApplied(object):
 class TestLoadsApplied(object):
 
     def test_no_load_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = []
 
-        restricted_query = apply_loads(query, load_spec)
+        restricted_query = apply_loads(stmt, load_spec)
 
         # defers all fields
         expected = (
@@ -81,12 +82,12 @@ class TestLoadsApplied(object):
 
     def test_single_value(self, session):
 
-        query = session.query(Bar)
+        stmt = select(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'fields': ['name']}
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         expected = (
             "SELECT bar.id AS bar_id, bar.name AS bar_name \n"
@@ -96,12 +97,12 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_single_model(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'fields': ['name', 'count']}
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
@@ -112,13 +113,13 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_multiple_models(self, session):
 
-        query = session.query(Foo, Bar)
+        stmt = select(Foo, Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'model': 'Foo', 'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.count AS foo_count, "
@@ -129,13 +130,14 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_multiple_models_joined(self, session, db_uri):
 
-        query = session.query(Foo, Bar).join(Bar)
+        stmt = select(Foo, Bar).join(Bar).\
+            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'model': 'Foo', 'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -148,13 +150,14 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_multiple_models_lazy_load(self, session, db_uri):
 
-        query = session.query(Foo).join(Bar)
+        stmt = select(Foo).join(Bar).\
+            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'model': 'Foo', 'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -167,10 +170,10 @@ class TestLoadsApplied(object):
 
     def test_a_single_dict_can_be_supplied_as_load_spec(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = {'fields': ['name', 'count']}
 
-        restricted_query = apply_loads(query, load_spec)
+        restricted_query = apply_loads(stmt, load_spec)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
@@ -181,10 +184,10 @@ class TestLoadsApplied(object):
 
     def test_a_list_of_fields_can_be_supplied_as_load_spec(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = ['name', 'count']
 
-        restricted_query = apply_loads(query, load_spec)
+        restricted_query = apply_loads(stmt, load_spec)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
@@ -195,12 +198,13 @@ class TestLoadsApplied(object):
 
     def test_eager_load(self, session, db_uri):
 
-        query = session.query(Foo).options(joinedload(Foo.bar))
+        stmt = select(Foo).options(joinedload(Foo.bar)).\
+            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = [
             {'model': 'Foo', 'fields': ['name']},
             {'model': 'Bar', 'fields': ['count']}
         ]
-        restricted_query = apply_loads(query, load_spec)
+        restricted_query = apply_loads(stmt, load_spec)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -225,13 +229,13 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_auto_join(self, session, db_uri):
 
-        query = session.query(Foo)
+        stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -245,13 +249,14 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_noop_if_query_contains_named_models(self, session, db_uri):
 
-        query = session.query(Foo, Bar).join(Bar)
+        stmt = select(Foo, Bar).join(Bar).\
+            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
             {'model': 'Foo', 'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(query, loads)
+        restricted_query = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -265,7 +270,7 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_auto_join_to_invalid_model(self, session):
 
-        query = session.query(Foo, Bar)
+        stmt = select(Foo, Bar)
         loads = [
             {'model': 'Foo', 'fields': ['count']},
             {'model': 'Bar', 'fields': ['count']},
@@ -273,14 +278,14 @@ class TestAutoJoin:
         ]
 
         with pytest.raises(BadSpec) as err:
-            apply_loads(query, loads)
+            apply_loads(stmt, loads)
 
         assert 'The query does not contain model `Qux`.' == err.value.args[0]
 
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_ambiguous_query(self, session):
 
-        query = session.query(Foo, Bar)
+        stmt = select(Foo, Bar)
         loads = [
             {'fields': ['count']},  # ambiguous
             {'model': 'Bar', 'fields': ['count']},
@@ -288,6 +293,6 @@ class TestAutoJoin:
         ]
 
         with pytest.raises(BadSpec) as err:
-            apply_loads(query, loads)
+            apply_loads(stmt, loads)
 
         assert 'Ambiguous spec. Please specify a model.' == err.value.args[0]

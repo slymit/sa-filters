@@ -3,7 +3,7 @@
 import datetime
 
 import pytest
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 
 from sa_filters import apply_filters
@@ -87,20 +87,20 @@ def multiple_corges_inserted(session, is_postgresql):
 class TestFiltersNotApplied:
 
     def test_no_filters_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = []
 
-        filtered_query = apply_filters(query, filters)
+        filtered_query = apply_filters(stmt, filters)
 
-        assert query == filtered_query
+        assert stmt == filtered_query
 
     @pytest.mark.parametrize('filter_', ['some text', 1, ''])
     def test_wrong_filters_format(self, session, filter_):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [filter_]
 
         with pytest.raises(BadFilterFormat) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         expected_error = 'Filter spec `{}` should be a dictionary.'.format(
             filter_
@@ -108,32 +108,32 @@ class TestFiltersNotApplied:
         assert expected_error == err.value.args[0]
 
     def test_invalid_operator(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'op_not_valid', 'value': 'name_1'}]
 
         with pytest.raises(BadFilterFormat) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert 'Operator `op_not_valid` not valid.' == err.value.args[0]
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_no_operator_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
         assert result[1].id == 3
 
     def test_no_field_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'op': '==', 'value': 'name_1'}]
 
         with pytest.raises(BadFilterFormat) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         expected_error = '`field` is a mandatory filter attribute.'
         assert expected_error == err.value.args[0]
@@ -141,20 +141,20 @@ class TestFiltersNotApplied:
     # TODO: replace this test once we add the option to compare against
     # another field
     def test_no_value_provided(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': '==', }]
 
         with pytest.raises(BadFilterFormat) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert '`value` must be provided.' == err.value.args[0]
 
     def test_invalid_field(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'invalid_field', 'op': '==', 'value': 'name_1'}]
 
         with pytest.raises(FieldNotFound) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         expected_error = (
             "Model <class 'test.models.Bar'> has no column `invalid_field`."
@@ -166,11 +166,11 @@ class TestFiltersNotApplied:
         'foos',  # model relationship
     ])
     def test_invalid_field_but_valid_model_attribute(self, session, attr_name):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': attr_name, 'op': '==', 'value': 'name_1'}]
 
         with pytest.raises(FieldNotFound) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         expected_error = (
             "Model <class 'test.models.Bar'> has no column `{}`.".format(
@@ -186,14 +186,14 @@ class TestMultipleModels:
     @pytest.mark.usefixtures('multiple_bars_inserted')
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_multiple_models(self, session):
-        query = session.query(Bar, Qux)
+        stmt = select(Bar, Qux)
         filters = [
             {'model': 'Bar', 'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Qux', 'field': 'name', 'op': '==', 'value': 'name_1'},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).unique().all()
 
         assert len(result) == 4
         bars, quxs = zip(*result)
@@ -210,14 +210,14 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_auto_join(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo)
         filters = [
             {'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -227,28 +227,28 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_do_not_auto_join(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo)
         filters = [
             {'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
         with pytest.raises(BadSpec) as exc:
-            apply_filters(query, filters, do_auto_join=False)
+            apply_filters(stmt, filters, do_auto_join=False)
 
         assert 'The query does not contain model `Bar`' in str(exc)
 
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_noop_if_query_contains_named_models(self, session):
 
-        query = session.query(Foo).join(Bar)
+        stmt = select(Foo).join(Bar)
         filters = [
             {'model': 'Foo', 'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -258,27 +258,27 @@ class TestAutoJoin:
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_auto_join_to_invalid_model(self, session):
 
-        query = session.query(Foo)
+        stmt = select(Foo)
         filters = [
             {'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
             {'model': 'Qux', 'field': 'created_at', 'op': 'is_not_null'}
         ]
         with pytest.raises(BadSpec) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert 'The query does not contain model `Qux`.' == err.value.args[0]
 
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_ambiguous_query(self, session):
 
-        query = session.query(Foo).join(Bar)
+        stmt = select(Foo).join(Bar)
         filters = [
             {'field': 'name', 'op': '==', 'value': 'name_1'},  # ambiguous
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
         with pytest.raises(BadSpec) as err:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert 'Ambiguous spec. Please specify a model.' == err.value.args[0]
 
@@ -286,14 +286,14 @@ class TestAutoJoin:
     def test_eager_load(self, session):
 
         # behaves as if the joinedload wasn't present
-        query = session.query(Foo).options(joinedload(Foo.bar))
+        stmt = select(Foo).options(joinedload(Foo.bar))
         filters = [
             {'field': 'name', 'op': '==', 'value': 'name_1'},
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -305,22 +305,22 @@ class TestApplyIsNullFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_filter_field_with_null_values(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_filter_field_with_no_null_values(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 0
 
@@ -329,11 +329,11 @@ class TestApplyIsNotNullFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_filter_field_with_null_values(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'is_not_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -342,11 +342,11 @@ class TestApplyIsNotNullFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_filter_field_with_no_null_values(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'is_not_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 4
         assert result[0].id == 1
@@ -359,11 +359,11 @@ class TestApplyFiltersMultipleTimes:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_concatenate_queries(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -374,7 +374,7 @@ class TestApplyFiltersMultipleTimes:
         filters = [{'field': 'id', 'op': '==', 'value': 3}]
 
         filtered_query = apply_filters(filtered_query, filters)
-        result = filtered_query.all()
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -385,11 +385,11 @@ class TestApplyFilterWithoutList:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_a_single_dict_can_be_supplied_as_filters(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = {'field': 'name', 'op': '==', 'value': 'name_1'}
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -402,11 +402,11 @@ class TestApplyFilterOnFieldBasedQuery:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_apply_filter_on_single_field_query(self, session):
-        query = session.query(Bar.id)
+        stmt = select(Bar.id)
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).all()
 
         assert len(result) == 2
         assert result[0] == (1,)
@@ -414,11 +414,11 @@ class TestApplyFilterOnFieldBasedQuery:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_apply_filter_on_aggregate_query(self, session):
-        query = session.query(func.count(Bar.id))
+        stmt = select(func.count(Bar.id))
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).all()
 
         assert len(result) == 1
         assert result[0] == (2,)
@@ -429,11 +429,11 @@ class TestApplyEqualToFilter:
     @pytest.mark.parametrize('operator', ['==', 'eq'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': operator, 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -457,10 +457,10 @@ class TestApplyEqualToFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, filters
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -472,11 +472,11 @@ class TestApplyNotEqualToFilter:
     @pytest.mark.parametrize('operator', ['!=', 'ne'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': operator, 'value': 'name_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -489,14 +489,14 @@ class TestApplyNotEqualToFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, operator
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'field': 'name', 'op': operator, 'value': 'name_2'},
             {'field': 'id', 'op': operator, 'value': 3}
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -510,11 +510,11 @@ class TestApplyGreaterThanFilter:
     @pytest.mark.parametrize('operator', ['>', 'gt'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '5'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -525,14 +525,14 @@ class TestApplyGreaterThanFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, operator
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'field': 'count', 'op': operator, 'value': '5'},
             {'field': 'id', 'op': operator, 'value': 2},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -543,11 +543,11 @@ class TestApplyLessThanFilter:
     @pytest.mark.parametrize('operator', ['<', 'lt'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '7'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -557,14 +557,14 @@ class TestApplyLessThanFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, operator
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'field': 'count', 'op': operator, 'value': '7'},
             {'field': 'id', 'op': operator, 'value': 1},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 0
 
@@ -574,11 +574,11 @@ class TestApplyGreaterOrEqualThanFilter:
     @pytest.mark.parametrize('operator', ['>=', 'ge'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '5'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -590,14 +590,14 @@ class TestApplyGreaterOrEqualThanFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, operator
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'field': 'count', 'op': operator, 'value': '5'},
             {'field': 'id', 'op': operator, 'value': 4},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -608,11 +608,11 @@ class TestApplyLessOrEqualThanFilter:
     @pytest.mark.parametrize('operator', ['<=', 'le'])
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session, operator):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '15'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -624,14 +624,14 @@ class TestApplyLessOrEqualThanFilter:
     def test_multiple_filters_applied_to_a_single_model(
         self, session, operator
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'field': 'count', 'op': operator, 'value': '15'},
             {'field': 'id', 'op': operator, 'value': 1},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -641,11 +641,11 @@ class TestApplyLikeFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'like', 'value': '%me_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -656,11 +656,11 @@ class TestApplyILikeFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session):
-        query = session.query(Bar)
+        stmt = session.query(Bar)
         filters = [{'field': 'name', 'op': 'ilike', 'value': '%ME_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -671,11 +671,11 @@ class TestApplyNotILikeFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'not_ilike', 'value': '%ME_1'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -686,21 +686,21 @@ class TestApplyInFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_field_not_in_value_list(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'in', 'value': [1, 2, 3]}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).all()
 
         assert len(result) == 0
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_field_in_value_list(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'in', 'value': [15, 2, 3]}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -710,11 +710,11 @@ class TestApplyNotInFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_field_not_in_value_list(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'not_in', 'value': [1, 2, 3]}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -723,11 +723,11 @@ class TestApplyNotInFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_field_in_value_list(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'not_in', 'value': [15, 2, 3]}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -745,15 +745,15 @@ class TestDateFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_date_equality(self, session, value):
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{
             'field': 'created_at',
             'op': '==',
             'value': value
         }]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].created_at == datetime.date(2016, 7, 14)
@@ -767,15 +767,15 @@ class TestDateFields:
     )
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_multiple_dates(self, session, value):
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{
             'field': 'created_at',
             'op': '>=',
             'value': value
         }]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].created_at == datetime.date(2016, 7, 13)
@@ -783,11 +783,11 @@ class TestDateFields:
 
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_null_date(self, session):
-        query = session.query(Qux)
+        stmt = session.query(Qux)
         filters = [{'field': 'created_at', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].created_at is None
@@ -807,11 +807,11 @@ class TestTimeFields:
         if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{'field': 'expiration_time', 'op': '==', 'value': value}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].expiration_time == datetime.time(3, 5, 9)
@@ -828,15 +828,15 @@ class TestTimeFields:
         if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{
             'field': 'expiration_time',
             'op': '>=',
             'value': value
         }]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].expiration_time == datetime.time(2, 5, 9)
@@ -844,11 +844,11 @@ class TestTimeFields:
 
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_null_time(self, session):
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{'field': 'expiration_time', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].expiration_time is None
@@ -869,15 +869,15 @@ class TestDateTimeFields:
         if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{
             'field': 'execution_time',
             'op': '==',
             'value': value
         }]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].execution_time == datetime.datetime(
@@ -897,15 +897,15 @@ class TestDateTimeFields:
         if isinstance(value, str) and is_sqlite:
             pytest.skip(STRING_DATE_TIME_NOT_SUPPORTED)
 
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{
             'field': 'execution_time',
             'op': '>=',
             'value': value
         }]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].execution_time == datetime.datetime(
@@ -917,11 +917,11 @@ class TestDateTimeFields:
 
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_null_datetime(self, session):
-        query = session.query(Qux)
+        stmt = select(Qux)
         filters = [{'field': 'execution_time', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].execution_time is None
@@ -931,7 +931,7 @@ class TestApplyBooleanFunctions:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_or(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'or': [
                 {'field': 'id', 'op': '==', 'value': 1},
@@ -939,8 +939,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -948,22 +948,22 @@ class TestApplyBooleanFunctions:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_or_with_one_arg(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'or': [
                 {'field': 'id', 'op': '==', 'value': 1},
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_or_with_three_args(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'or': [
                 {'field': 'id', 'op': '==', 'value': 1},
@@ -972,8 +972,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -998,17 +998,17 @@ class TestApplyBooleanFunctions:
     )
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_or_with_bad_format(self, session, or_args, expected_error):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'or': or_args}]
 
         with pytest.raises(BadFilterFormat) as exc:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert expected_error in str(exc)
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_and(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'and': [
                 {'field': 'id', 'op': '<=', 'value': 2},
@@ -1016,30 +1016,30 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 2
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_and_with_one_arg(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'and': [
                 {'field': 'id', 'op': '==', 'value': 3},
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_and_with_three_args(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'and': [
                 {'field': 'id', 'op': '<=', 'value': 3},
@@ -1048,8 +1048,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -1072,25 +1072,25 @@ class TestApplyBooleanFunctions:
     )
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_and_with_bad_format(self, session, and_args, expected_error):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'and': and_args}]
 
         with pytest.raises(BadFilterFormat) as exc:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert expected_error in str(exc)
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_not(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {'not': [
                 {'field': 'id', 'op': '==', 'value': 3},
             ]},
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -1120,17 +1120,17 @@ class TestApplyBooleanFunctions:
     )
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_not_with_bad_format(self, session, not_args, expected_error):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'not': not_args}]
 
         with pytest.raises(BadFilterFormat) as exc:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert expected_error in str(exc)
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_complex(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {
                 'and': [
@@ -1149,15 +1149,15 @@ class TestApplyBooleanFunctions:
             }
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_complex_using_tuples(self, session):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = (
             {
                 'and': (
@@ -1176,8 +1176,8 @@ class TestApplyBooleanFunctions:
             },
         )
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -1190,11 +1190,11 @@ class TestApplyArrayFilters:
         if not is_postgresql:
             pytest.skip(ARRAY_NOT_SUPPORTED)
 
-        query = session.query(Corge)
+        stmt = select(Corge)
         filters = [{'field': 'tags', 'op': 'any', 'value': 'foo'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -1205,11 +1205,11 @@ class TestApplyArrayFilters:
         if not is_postgresql:
             pytest.skip(ARRAY_NOT_SUPPORTED)
 
-        query = session.query(Corge)
+        stmt = select(Corge)
         filters = [{'field': 'tags', 'op': 'not_any', 'value': 'foo'}]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -1236,7 +1236,7 @@ class TestHybridAttributes:
     def test_orm_descriptors_not_valid_hybrid_attributes(
         self, session, field, expected_error
     ):
-        query = session.query(Bar)
+        stmt = select(Bar)
         filters = [
             {
                 'model': 'Bar',
@@ -1246,14 +1246,14 @@ class TestHybridAttributes:
             }
         ]
         with pytest.raises(FieldNotFound) as exc:
-            apply_filters(query, filters)
+            apply_filters(stmt, filters)
 
         assert expected_error in str(exc)
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_by_hybrid_properties(self, session):
-        query = session.query(Bar, Qux)
+        stmt = select(Bar, Qux)
         filters = [
             {
                 'model': 'Bar',
@@ -1269,8 +1269,8 @@ class TestHybridAttributes:
             },
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).all()
 
         assert len(result) == 2
         bars, quxs = zip(*result)
@@ -1286,7 +1286,7 @@ class TestHybridAttributes:
     @pytest.mark.usefixtures('multiple_bars_inserted')
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_filter_by_hybrid_methods(self, session):
-        query = session.query(Bar, Qux)
+        stmt = select(Bar, Qux)
         filters = [
             {
                 'model': 'Bar',
@@ -1302,8 +1302,8 @@ class TestHybridAttributes:
             },
         ]
 
-        filtered_query = apply_filters(query, filters)
-        result = filtered_query.all()
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).all()
 
         assert len(result) == 1
         bars, quxs = zip(*result)
@@ -1315,3 +1315,23 @@ class TestHybridAttributes:
         assert set(map(type, quxs)) == {Qux}
         assert {qux.id for qux in quxs} == {4}
         assert {qux.three_times_count() for qux in quxs} == {45}
+
+
+class TestQueryObject:
+
+    @pytest.mark.usefixtures('multiple_foos_inserted')
+    def test_auto_join(self, session):
+
+        query = session.query(Foo)
+        filters = [
+            {'field': 'name', 'op': '==', 'value': 'name_1'},
+            {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
+        ]
+
+        filtered_query = apply_filters(query, filters)
+        result = filtered_query.all()
+
+        assert len(result) == 1
+        assert result[0].id == 3
+        assert result[0].bar_id == 3
+        assert result[0].bar.count is None
