@@ -5,6 +5,13 @@ Here you can see the full list of changes between sa-filters
 versions, where semantic versioning is used: *major.minor.patch*.
 
 
+1.2.0
+-----
+
+Released 2022-11-06
+
+* Add the ability to use table name instead of model name
+
 1.1.0
 -----
 
