@@ -343,6 +343,17 @@ Where ``field`` is the name of the field that will be filtered using the
 operator provided in ``op`` (optional, defaults to ``==``) and the
 provided ``value`` (optional, depending on the operator).
 
+You can also specify the table name instead of the model name by specifying
+the optional key ``table``:
+
+.. code-block:: python
+
+    filter_spec = [
+        {'table': 'table_name', 'field': 'field_name', 'op': '==', 'value': 'field_value'},
+        {'table': 'table_name', 'field': 'field_2_name', 'op': '!=', 'value': 'field_2_value'},
+        # ...
+    ]
+
 This is the list of operators that can be used:
 
 - ``is_null``

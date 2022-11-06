@@ -6,8 +6,9 @@ from itertools import chain
 
 from sqlalchemy import and_, or_, not_, func
 
-from .exceptions import BadFilterFormat
-from .models import Field, auto_join, get_model_from_spec, get_default_model
+from .exceptions import BadFilterFormat, BadSpec
+from .models import Field, auto_join, get_model_from_spec, get_default_model, \
+    get_class_by_tablename
 
 
 BooleanFunction = namedtuple(
@@ -82,9 +83,23 @@ class Filter(object):
             raise BadFilterFormat('`value` must be provided.')
 
     def get_named_models(self):
-        if "model" in self.filter_spec:
+        if all(k in self.filter_spec for k in ('model', 'table')):
+            raise BadFilterFormat(
+                'Only one field `model` or `table` must be provided.'
+            )
+        elif "model" in self.filter_spec:
             return {self.filter_spec['model']}
-        return set()
+        elif "table" in self.filter_spec:
+            model = get_class_by_tablename(self.filter_spec['table'])
+            if model is None:
+                raise BadSpec(
+                    'The query does not contain table `{}`.'.format(
+                        self.filter_spec['table']
+                    )
+                )
+            return {model.__name__}
+        else:
+            return set()
 
     def format_for_sqlalchemy(self, query, default_model):
         filter_spec = self.filter_spec

@@ -1335,3 +1335,54 @@ class TestQueryObject:
         assert result[0].id == 3
         assert result[0].bar_id == 3
         assert result[0].bar.count is None
+
+
+class TestTableField:
+
+    def test_model_and_table_fields_provided(self, session):
+        stmt = select(Bar)
+        filters = [
+            {
+                'model': 'Bar',
+                'table': 'bar',
+                'field': 'name',
+                'op': '==',
+                'value': 'name_1'
+            }
+        ]
+
+        with pytest.raises(BadFilterFormat) as err:
+            apply_filters(stmt, filters)
+
+        expected_error = 'Only one field `model` or `table` must be provided.'
+        assert expected_error == err.value.args[0]
+
+    @pytest.mark.usefixtures('multiple_foos_inserted')
+    def test_auto_join(self, session):
+
+        stmt = select(Foo)
+        filters = [
+            {'field': 'name', 'op': '==', 'value': 'name_1'},
+            {'table': 'bar', 'field': 'count', 'op': 'is_null'},
+        ]
+
+        filtered_query = apply_filters(stmt, filters)
+        result = session.execute(filtered_query).scalars().all()
+
+        assert len(result) == 1
+        assert result[0].id == 3
+        assert result[0].bar_id == 3
+        assert result[0].bar.count is None
+
+    @pytest.mark.usefixtures('multiple_foos_inserted')
+    def test_auto_join_to_invalid_table(self, session):
+
+        stmt = select(Foo)
+        filters = [
+            {'field': 'name', 'op': '==', 'value': 'name_1'},
+            {'table': 'nope', 'field': 'count', 'op': 'is_null'},
+        ]
+        with pytest.raises(BadSpec) as err:
+            apply_filters(stmt, filters)
+
+        assert 'The query does not contain table `nope`.' == err.value.args[0]

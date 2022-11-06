@@ -63,6 +63,20 @@ def get_model_from_table(table):  # pragma: nocover
     return None
 
 
+def get_class_by_tablename(tablename):
+    """Return class reference mapped to table.
+
+    :param tablename: String with name of table.
+    :return: Class reference or None.
+    """
+    for registry in mapperlib._all_registries():
+        for mapper in registry.mappers:
+            model = mapper.class_
+            if model.__tablename__ == tablename:
+                return model
+    return None
+
+
 def get_query_models(query):
     """Get models from query.
 
@@ -118,6 +132,10 @@ def get_model_from_spec(spec, query, default_model=None):
         raise BadQuery('The query does not contain any models.')
 
     model_name = spec.get('model')
+    if "table" in spec:
+        model = get_class_by_tablename(spec.get('table'))
+        model_name = model.__name__
+
     if model_name is not None:
         models = [v for (k, v) in models.items() if k == model_name]
         if not models:
