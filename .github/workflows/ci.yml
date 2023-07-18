@@ -41,13 +41,22 @@ jobs:
       matrix:
         include:
           - python: '3.7'
-            tox_env: 'py37-sqlalchemy{1.4,2.0}'
+            tox_env: 'py37-sqlalchemy1.4'
           - python: '3.8'
-            tox_env: 'py38-sqlalchemy{1.4,2.0}'
+            tox_env: 'py38-sqlalchemy1.4'
           - python: '3.9'
-            tox_env: 'py39-sqlalchemy{1.4,2.0}'
+            tox_env: 'py39-sqlalchemy1.4'
           - python: '3.10'
-            tox_env: 'py310-sqlalchemy{1.4,2.0}'
+            tox_env: 'py310-sqlalchemy1.4'
+
+          - python: '3.7'
+            tox_env: 'py37-sqlalchemy2.0'
+          - python: '3.8'
+            tox_env: 'py38-sqlalchemy2.0'
+          - python: '3.9'
+            tox_env: 'py39-sqlalchemy2.0'
+          - python: '3.10'
+            tox_env: 'py310-sqlalchemy2.0'
 
     steps:
       - uses: actions/checkout@v3
