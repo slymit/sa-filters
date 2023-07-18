@@ -4,7 +4,7 @@ from sqlalchemy import (
     Column, Date, DateTime, ForeignKey, Integer, String, Time
 )
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
 

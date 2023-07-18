@@ -656,7 +656,7 @@ class TestApplyILikeFilter:
 
     @pytest.mark.usefixtures('multiple_bars_inserted')
     def test_one_filter_applied_to_a_single_model(self, session):
-        stmt = session.query(Bar)
+        stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'ilike', 'value': '%ME_1'}]
 
         filtered_query = apply_filters(stmt, filters)
@@ -783,7 +783,7 @@ class TestDateFields:
 
     @pytest.mark.usefixtures('multiple_quxs_inserted')
     def test_null_date(self, session):
-        stmt = session.query(Qux)
+        stmt = select(Qux)
         filters = [{'field': 'created_at', 'op': 'is_null'}]
 
         filtered_query = apply_filters(stmt, filters)

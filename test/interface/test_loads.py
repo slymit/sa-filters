@@ -2,11 +2,13 @@
 import pytest
 from sqlalchemy import select, LABEL_STYLE_TABLENAME_PLUS_COL
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import ArgumentError
+from packaging.version import Version
 
 from sa_filters import apply_loads
 from sa_filters.exceptions import BadLoadFormat, BadSpec, FieldNotFound
 from test.models import Foo, Bar
-from test import error_value
+from test import error_value, SQLALCHEMY_VERSION
 
 
 @pytest.fixture
@@ -139,7 +141,10 @@ class TestLoadsApplied(object):
 
         restricted_query = apply_loads(stmt, loads)
 
-        join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
+        if "mysql" in db_uri and SQLALCHEMY_VERSION < Version("2.0.0"):
+            join_type = "INNER JOIN"
+        else:
+            join_type = "JOIN"
 
         expected = (
             "SELECT foo.id AS foo_id, foo.count AS foo_count, "
@@ -166,7 +171,18 @@ class TestLoadsApplied(object):
             "SELECT foo.id AS foo_id, foo.count AS foo_count \n"
             "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
         )
-        assert str(restricted_query) == expected
+
+        if SQLALCHEMY_VERSION < Version("2.0.0"):
+            assert str(restricted_query) == expected
+        else:
+            with pytest.raises(ArgumentError) as err:
+                str(restricted_query)
+
+            assert \
+                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
+                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
+                'Please specify the full path from one of the root entities ' \
+                'to the target attribute. ' == err.value.args[0]
 
     def test_a_single_dict_can_be_supplied_as_load_spec(self, session):
 
@@ -221,7 +237,17 @@ class TestLoadsApplied(object):
             )
         )
 
-        assert str(restricted_query) == expected
+        if SQLALCHEMY_VERSION < Version("2.0.0"):
+            assert str(restricted_query) == expected
+        else:
+            with pytest.raises(ArgumentError) as err:
+                str(restricted_query)
+
+            assert \
+                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
+                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
+                'Please specify the full path from one of the root entities ' \
+                'to the target attribute. ' == err.value.args[0]
 
 
 class TestAutoJoin:
@@ -244,7 +270,18 @@ class TestAutoJoin:
             "SELECT foo.id AS foo_id, foo.count AS foo_count \n"
             "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
         )
-        assert str(restricted_query) == expected
+
+        if SQLALCHEMY_VERSION < Version("2.0.0"):
+            assert str(restricted_query) == expected
+        else:
+            with pytest.raises(ArgumentError) as err:
+                str(restricted_query)
+
+            assert \
+                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
+                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
+                'Please specify the full path from one of the root entities ' \
+                'to the target attribute. ' == err.value.args[0]
 
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_noop_if_query_contains_named_models(self, session, db_uri):
@@ -258,7 +295,10 @@ class TestAutoJoin:
 
         restricted_query = apply_loads(stmt, loads)
 
-        join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
+        if "mysql" in db_uri and SQLALCHEMY_VERSION < Version("2.0.0"):
+            join_type = "INNER JOIN"
+        else:
+            join_type = "JOIN"
 
         expected = (
             "SELECT foo.id AS foo_id, foo.count AS foo_count, "

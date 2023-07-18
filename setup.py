@@ -26,8 +26,9 @@ setup(
     extras_require={
         'dev': [
             'pytest>=6.2.5',
+            'packaging>=23.1',
             'coverage~=5.0.4',
-            'sqlalchemy-utils~=0.37.2',
+            'sqlalchemy-utils~=0.41.1',
             'flake8',
             'restructuredtext-lint',
             'Pygments',

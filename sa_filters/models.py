@@ -3,7 +3,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import mapperlib, Query
 from sqlalchemy.sql.util import find_tables
 from sqlalchemy import Table
-from sqlalchemy.util import symbol
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 import types
 
 from .exceptions import BadQuery, FieldNotFound, BadSpec
@@ -39,18 +39,10 @@ class Field(object):
         column_names = columns.keys()
         hybrid_names = [
             key for key, item in orm_descriptors.items()
-            if _is_hybrid_property(item) or _is_hybrid_method(item)
+            if type(item) in [hybrid_property, hybrid_method]
         ]
 
         return set(column_names) | set(hybrid_names)
-
-
-def _is_hybrid_property(orm_descriptor):
-    return orm_descriptor.extension_type == symbol('HYBRID_PROPERTY')
-
-
-def _is_hybrid_method(orm_descriptor):
-    return orm_descriptor.extension_type == symbol('HYBRID_METHOD')
 
 
 def get_model_from_table(table):  # pragma: nocover
