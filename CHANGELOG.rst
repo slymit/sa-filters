@@ -5,6 +5,15 @@ Here you can see the full list of changes between sa-filters
 versions, where semantic versioning is used: *major.minor.patch*.
 
 
+1.3.0
+-----
+
+Released 2023-07-28
+
+* Add support sqlalchemy 2.0
+* Fix CI error 'Failed to initialize container mariadb:latest'
+* Fix CI work with latest tox version
+
 1.2.0
 -----
 
