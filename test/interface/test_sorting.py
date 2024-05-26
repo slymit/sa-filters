@@ -70,9 +70,9 @@ class TestSortNotApplied(object):
         stmt = select(Bar)
         order_by = []
 
-        filtered_query = apply_sort(stmt, order_by)
+        filtered_stmt = apply_sort(stmt, order_by)
 
-        assert stmt == filtered_query
+        assert stmt == filtered_stmt
 
     @pytest.mark.parametrize('sort', ['some text', 1, []])
     def test_wrong_sort_format(self, session, sort):
@@ -149,8 +149,8 @@ class TestSortApplied(object):
         stmt = select(Bar)
         order_by = [{'field': 'name', 'direction': 'asc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.name for result in results] == [
             'name_1', 'name_1', 'name_1', 'name_1',
@@ -164,8 +164,8 @@ class TestSortApplied(object):
         stmt = select(Bar)
         order_by = [{'field': 'name', 'direction': 'desc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.name for result in results] == [
             'name_5',
@@ -183,8 +183,8 @@ class TestSortApplied(object):
             {'field': 'id', 'direction': 'desc'},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [
             (result.name, result.count, result.id) for result in results
@@ -237,8 +237,8 @@ class TestSortApplied(object):
             {'model': 'Qux', 'field': 'count', 'direction': 'asc'},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert len(results) == 4
         assert results[0].id == 3
@@ -251,8 +251,8 @@ class TestSortApplied(object):
         stmt = select(Bar)
         sort_spec = {'field': 'name', 'direction': 'desc'}
 
-        sorted_query = apply_sort(stmt, sort_spec)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, sort_spec)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.name for result in results] == [
             'name_5',
@@ -276,8 +276,8 @@ class TestAutoJoin:
             {'field': 'id', 'direction': 'asc'},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [
             (result.count, result.bar.name, result.id) for result in results
@@ -304,8 +304,8 @@ class TestAutoJoin:
             {'model': 'Foo', 'field': 'id', 'direction': 'asc'},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [
             (result.count, result.bar.name, result.id) for result in results
@@ -365,8 +365,8 @@ class TestAutoJoin:
             {'field': 'id', 'direction': 'asc'},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [
             (result.count, result.bar.name, result.id) for result in results
@@ -400,8 +400,8 @@ class TestSortNullsFirst(object):
             {'field': 'count', 'direction': 'asc', 'nullsfirst': True}
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count for result in results] == [
             None, None, 5, 10, 20, 30, 40, 50,
@@ -417,8 +417,8 @@ class TestSortNullsFirst(object):
             {'field': 'count', 'direction': 'desc', 'nullsfirst': True}
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count for result in results] == [
             None, None, 50, 40, 30, 20, 10, 5,
@@ -437,8 +437,8 @@ class TestSortNullsFirst(object):
             {'field': 'count', 'direction': 'asc', 'nullsfirst': True},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [(result.name, result.count) for result in results] == [
             ('name_1', None),
@@ -464,8 +464,8 @@ class TestSortNullsFirst(object):
             {'field': 'count', 'direction': 'desc', 'nullsfirst': True},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [(result.name, result.count) for result in results] == [
             ('name_1', None),
@@ -497,8 +497,8 @@ class TestSortNullsLast(object):
             {'field': 'count', 'direction': 'asc', 'nullslast': True}
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count for result in results] == [
             5, 10, 20, 30, 40, 50, None, None,
@@ -514,8 +514,8 @@ class TestSortNullsLast(object):
             {'field': 'count', 'direction': 'desc', 'nullslast': True}
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count for result in results] == [
             50, 40, 30, 20, 10, 5, None, None,
@@ -532,8 +532,8 @@ class TestSortNullsLast(object):
             {'field': 'count', 'direction': 'asc', 'nullslast': True},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [(result.name, result.count) for result in results] == [
             ('name_1', 5),
@@ -559,8 +559,8 @@ class TestSortNullsLast(object):
             {'field': 'count', 'direction': 'desc', 'nullslast': True},
         ]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [(result.name, result.count) for result in results] == [
             ('name_1', 40),
@@ -595,8 +595,8 @@ class TestSortHybridAttributes(object):
         stmt = select(Bar)
         order_by = [{'field': 'count_square', 'direction': 'asc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count_square for result in results] == [
             1, 4, 4, 9, 25, 100, 144, 225
@@ -607,8 +607,8 @@ class TestSortHybridAttributes(object):
         stmt = select(Bar)
         order_by = [{'field': 'count_square', 'direction': 'desc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.count_square for result in results] == [
             225, 144, 100, 25, 9, 4, 4, 1
@@ -619,8 +619,8 @@ class TestSortHybridAttributes(object):
         stmt = select(Bar)
         order_by = [{'field': 'three_times_count', 'direction': 'asc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.three_times_count() for result in results] == [
             3, 6, 6, 9, 15, 30, 36, 45
@@ -631,8 +631,8 @@ class TestSortHybridAttributes(object):
         stmt = select(Bar)
         order_by = [{'field': 'three_times_count', 'direction': 'desc'}]
 
-        sorted_query = apply_sort(stmt, order_by)
-        results = session.execute(sorted_query).scalars().all()
+        sorted_stmt = apply_sort(stmt, order_by)
+        results = session.execute(sorted_stmt).scalars().all()
 
         assert [result.three_times_count() for result in results] == [
             45, 36, 30, 15, 9, 6, 6, 3

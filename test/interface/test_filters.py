@@ -90,9 +90,9 @@ class TestFiltersNotApplied:
         stmt = select(Bar)
         filters = []
 
-        filtered_query = apply_filters(stmt, filters)
+        filtered_stmt = apply_filters(stmt, filters)
 
-        assert stmt == filtered_query
+        assert stmt == filtered_stmt
 
     @pytest.mark.parametrize('filter_', ['some text', 1, ''])
     def test_wrong_filters_format(self, session, filter_):
@@ -121,8 +121,8 @@ class TestFiltersNotApplied:
         stmt = select(Bar)
         filters = [{'field': 'name', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -192,8 +192,8 @@ class TestMultipleModels:
             {'model': 'Qux', 'field': 'name', 'op': '==', 'value': 'name_1'},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).unique().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).unique().all()
 
         assert len(result) == 4
         bars, quxs = zip(*result)
@@ -216,8 +216,8 @@ class TestAutoJoin:
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -247,8 +247,8 @@ class TestAutoJoin:
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -292,8 +292,8 @@ class TestAutoJoin:
             {'model': 'Bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -308,8 +308,8 @@ class TestApplyIsNullFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -319,8 +319,8 @@ class TestApplyIsNullFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 0
 
@@ -332,8 +332,8 @@ class TestApplyIsNotNullFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'is_not_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -345,8 +345,8 @@ class TestApplyIsNotNullFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'is_not_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 4
         assert result[0].id == 1
@@ -362,8 +362,8 @@ class TestApplyFiltersMultipleTimes:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -373,8 +373,8 @@ class TestApplyFiltersMultipleTimes:
 
         filters = [{'field': 'id', 'op': '==', 'value': 3}]
 
-        filtered_query = apply_filters(filtered_query, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(filtered_stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -388,8 +388,8 @@ class TestApplyFilterWithoutList:
         stmt = select(Bar)
         filters = {'field': 'name', 'op': '==', 'value': 'name_1'}
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -405,8 +405,8 @@ class TestApplyFilterOnFieldBasedQuery:
         stmt = select(Bar.id)
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).all()
 
         assert len(result) == 2
         assert result[0] == (1,)
@@ -417,8 +417,8 @@ class TestApplyFilterOnFieldBasedQuery:
         stmt = select(func.count(Bar.id))
         filters = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).all()
 
         assert len(result) == 1
         assert result[0] == (2,)
@@ -432,8 +432,8 @@ class TestApplyEqualToFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': operator, 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -459,8 +459,8 @@ class TestApplyEqualToFilter:
     ):
         stmt = select(Bar)
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -475,8 +475,8 @@ class TestApplyNotEqualToFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': operator, 'value': 'name_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -495,8 +495,8 @@ class TestApplyNotEqualToFilter:
             {'field': 'id', 'op': operator, 'value': 3}
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -513,8 +513,8 @@ class TestApplyGreaterThanFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '5'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -531,8 +531,8 @@ class TestApplyGreaterThanFilter:
             {'field': 'id', 'op': operator, 'value': 2},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -546,8 +546,8 @@ class TestApplyLessThanFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '7'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -563,8 +563,8 @@ class TestApplyLessThanFilter:
             {'field': 'id', 'op': operator, 'value': 1},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 0
 
@@ -577,8 +577,8 @@ class TestApplyGreaterOrEqualThanFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '5'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -596,8 +596,8 @@ class TestApplyGreaterOrEqualThanFilter:
             {'field': 'id', 'op': operator, 'value': 4},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -611,8 +611,8 @@ class TestApplyLessOrEqualThanFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': operator, 'value': '15'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -630,8 +630,8 @@ class TestApplyLessOrEqualThanFilter:
             {'field': 'id', 'op': operator, 'value': 1},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -644,8 +644,8 @@ class TestApplyLikeFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'like', 'value': '%me_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -659,8 +659,8 @@ class TestApplyILikeFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'ilike', 'value': '%ME_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -674,8 +674,8 @@ class TestApplyNotILikeFilter:
         stmt = select(Bar)
         filters = [{'field': 'name', 'op': 'not_ilike', 'value': '%ME_1'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -689,8 +689,8 @@ class TestApplyInFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'in', 'value': [1, 2, 3]}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).all()
 
         assert len(result) == 0
 
@@ -699,8 +699,8 @@ class TestApplyInFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'in', 'value': [15, 2, 3]}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 4
@@ -713,8 +713,8 @@ class TestApplyNotInFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'not_in', 'value': [1, 2, 3]}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -726,8 +726,8 @@ class TestApplyNotInFilter:
         stmt = select(Bar)
         filters = [{'field': 'count', 'op': 'not_in', 'value': [15, 2, 3]}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -752,8 +752,8 @@ class TestDateFields:
             'value': value
         }]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].created_at == datetime.date(2016, 7, 14)
@@ -774,8 +774,8 @@ class TestDateFields:
             'value': value
         }]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].created_at == datetime.date(2016, 7, 13)
@@ -786,8 +786,8 @@ class TestDateFields:
         stmt = select(Qux)
         filters = [{'field': 'created_at', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].created_at is None
@@ -810,8 +810,8 @@ class TestTimeFields:
         stmt = select(Qux)
         filters = [{'field': 'expiration_time', 'op': '==', 'value': value}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].expiration_time == datetime.time(3, 5, 9)
@@ -835,8 +835,8 @@ class TestTimeFields:
             'value': value
         }]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].expiration_time == datetime.time(2, 5, 9)
@@ -847,8 +847,8 @@ class TestTimeFields:
         stmt = select(Qux)
         filters = [{'field': 'expiration_time', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].expiration_time is None
@@ -876,8 +876,8 @@ class TestDateTimeFields:
             'value': value
         }]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].execution_time == datetime.datetime(
@@ -904,8 +904,8 @@ class TestDateTimeFields:
             'value': value
         }]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].execution_time == datetime.datetime(
@@ -920,8 +920,8 @@ class TestDateTimeFields:
         stmt = select(Qux)
         filters = [{'field': 'execution_time', 'op': 'is_null'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].execution_time is None
@@ -939,8 +939,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -955,8 +955,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -972,8 +972,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -1016,8 +1016,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 2
@@ -1031,8 +1031,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -1048,8 +1048,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 1
@@ -1089,8 +1089,8 @@ class TestApplyBooleanFunctions:
             ]},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 3
         assert result[0].id == 1
@@ -1149,8 +1149,8 @@ class TestApplyBooleanFunctions:
             }
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -1176,8 +1176,8 @@ class TestApplyBooleanFunctions:
             },
         )
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3
@@ -1193,8 +1193,8 @@ class TestApplyArrayFilters:
         stmt = select(Corge)
         filters = [{'field': 'tags', 'op': 'any', 'value': 'foo'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 2
@@ -1208,8 +1208,8 @@ class TestApplyArrayFilters:
         stmt = select(Corge)
         filters = [{'field': 'tags', 'op': 'not_any', 'value': 'foo'}]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -1269,8 +1269,8 @@ class TestHybridAttributes:
             },
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).all()
 
         assert len(result) == 2
         bars, quxs = zip(*result)
@@ -1302,8 +1302,8 @@ class TestHybridAttributes:
             },
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).all()
 
         assert len(result) == 1
         bars, quxs = zip(*result)
@@ -1366,8 +1366,8 @@ class TestTableField:
             {'table': 'bar', 'field': 'count', 'op': 'is_null'},
         ]
 
-        filtered_query = apply_filters(stmt, filters)
-        result = session.execute(filtered_query).scalars().all()
+        filtered_stmt = apply_filters(stmt, filters)
+        result = session.execute(filtered_stmt).scalars().all()
 
         assert len(result) == 1
         assert result[0].id == 3

@@ -73,14 +73,14 @@ class TestLoadsApplied(object):
         stmt = select(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = []
 
-        restricted_query = apply_loads(stmt, load_spec)
+        restricted_stmt = apply_loads(stmt, load_spec)
 
         # defers all fields
         expected = (
             "SELECT bar.id AS bar_id \n"
             "FROM bar"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_single_value(self, session):
 
@@ -89,13 +89,13 @@ class TestLoadsApplied(object):
             {'fields': ['name']}
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         expected = (
             "SELECT bar.id AS bar_id, bar.name AS bar_name \n"
             "FROM bar"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_multiple_values_single_model(self, session):
 
@@ -104,14 +104,14 @@ class TestLoadsApplied(object):
             {'fields': ['name', 'count']}
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
             "foo.count AS foo_count \n"
             "FROM foo"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_multiple_values_multiple_models(self, session):
 
@@ -121,14 +121,14 @@ class TestLoadsApplied(object):
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.count AS foo_count, "
             "bar.id AS bar_id, bar.count AS bar_count \n"
             "FROM foo, bar"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_multiple_values_multiple_models_joined(self, session, db_uri):
 
@@ -139,7 +139,7 @@ class TestLoadsApplied(object):
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         if "mysql" in db_uri and SQLALCHEMY_VERSION < Version("2.0.0"):
             join_type = "INNER JOIN"
@@ -151,7 +151,7 @@ class TestLoadsApplied(object):
             "bar.id AS bar_id, bar.count AS bar_count \n"
             "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_multiple_values_multiple_models_lazy_load(self, session, db_uri):
 
@@ -162,7 +162,7 @@ class TestLoadsApplied(object):
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -173,10 +173,10 @@ class TestLoadsApplied(object):
         )
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
-            assert str(restricted_query) == expected
+            assert str(restricted_stmt) == expected
         else:
             with pytest.raises(ArgumentError) as err:
-                str(restricted_query)
+                str(restricted_stmt)
 
             assert \
                 'Mapped class Mapper[Bar(bar)] does not apply to any ' \
@@ -189,28 +189,28 @@ class TestLoadsApplied(object):
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = {'fields': ['name', 'count']}
 
-        restricted_query = apply_loads(stmt, load_spec)
+        restricted_stmt = apply_loads(stmt, load_spec)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
             "foo.count AS foo_count \n"
             "FROM foo"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_a_list_of_fields_can_be_supplied_as_load_spec(self, session):
 
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = ['name', 'count']
 
-        restricted_query = apply_loads(stmt, load_spec)
+        restricted_stmt = apply_loads(stmt, load_spec)
 
         expected = (
             "SELECT foo.id AS foo_id, foo.name AS foo_name, "
             "foo.count AS foo_count \n"
             "FROM foo"
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     def test_eager_load(self, session, db_uri):
 
@@ -220,7 +220,7 @@ class TestLoadsApplied(object):
             {'model': 'Foo', 'fields': ['name']},
             {'model': 'Bar', 'fields': ['count']}
         ]
-        restricted_query = apply_loads(stmt, load_spec)
+        restricted_stmt = apply_loads(stmt, load_spec)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -238,10 +238,10 @@ class TestLoadsApplied(object):
         )
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
-            assert str(restricted_query) == expected
+            assert str(restricted_stmt) == expected
         else:
             with pytest.raises(ArgumentError) as err:
-                str(restricted_query)
+                str(restricted_stmt)
 
             assert \
                 'Mapped class Mapper[Bar(bar)] does not apply to any ' \
@@ -261,7 +261,7 @@ class TestAutoJoin:
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
 
@@ -272,10 +272,10 @@ class TestAutoJoin:
         )
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
-            assert str(restricted_query) == expected
+            assert str(restricted_stmt) == expected
         else:
             with pytest.raises(ArgumentError) as err:
-                str(restricted_query)
+                str(restricted_stmt)
 
             assert \
                 'Mapped class Mapper[Bar(bar)] does not apply to any ' \
@@ -293,7 +293,7 @@ class TestAutoJoin:
             {'model': 'Bar', 'fields': ['count']},
         ]
 
-        restricted_query = apply_loads(stmt, loads)
+        restricted_stmt = apply_loads(stmt, loads)
 
         if "mysql" in db_uri and SQLALCHEMY_VERSION < Version("2.0.0"):
             join_type = "INNER JOIN"
@@ -305,7 +305,7 @@ class TestAutoJoin:
             "bar.id AS bar_id, bar.count AS bar_count \n"
             "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
         )
-        assert str(restricted_query) == expected
+        assert str(restricted_stmt) == expected
 
     @pytest.mark.usefixtures('multiple_foos_inserted')
     def test_auto_join_to_invalid_model(self, session):
