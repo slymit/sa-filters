@@ -1,7 +1,7 @@
 .PHONY: test
 
-POSTGRES_VERSION?=9.6
-MYSQL_VERSION?=5.7
+POSTGRES_VERSION?=latest
+MYSQL_VERSION?=latest
 
 
 rst-lint:
