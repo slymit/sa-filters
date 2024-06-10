@@ -33,3 +33,5 @@ postgres-container:
 		-e POSTGRES_DB=test_sa_filters \
 		-e POSTGRES_INITDB_ARGS="--encoding=UTF8 --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8" \
 		postgres:$(POSTGRES_VERSION)
+
+containers: mysql-container postgres-container
