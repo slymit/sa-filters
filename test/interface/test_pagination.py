@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from collections import namedtuple
-
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from sa_filters import apply_pagination
 from sa_filters.exceptions import InvalidPage
+from sa_filters.pagination import Pagination
 from test import error_value
 from test.models import Bar
-
-
-Pagination = namedtuple(
-    'Pagination', ['page_number', 'page_size', 'num_pages', 'total_results']
-)
 
 
 class TestPaginationFixtures(object):
@@ -49,7 +43,7 @@ class TestWrongPagination(TestPaginationFixtures):
         stmt = select(Bar)
 
         with pytest.raises(InvalidPage) as err:
-            apply_pagination(stmt, page_number, page_size, session=session)
+            apply_pagination(stmt, page_number, page_size)
 
         expected_error = 'Page number should be positive: {}'.format(
             page_number
@@ -70,7 +64,7 @@ class TestWrongPagination(TestPaginationFixtures):
         stmt = select(Bar)
 
         with pytest.raises(InvalidPage) as err:
-            apply_pagination(stmt, page_number, page_size, session=session)
+            apply_pagination(stmt, page_number, page_size)
 
         expected_error = 'Page number should be positive: {}'.format(
             page_number
@@ -89,7 +83,7 @@ class TestWrongPagination(TestPaginationFixtures):
         stmt = select(Bar)
 
         with pytest.raises(InvalidPage) as err:
-            apply_pagination(stmt, page_number, page_size, session=session)
+            apply_pagination(stmt, page_number, page_size)
 
         expected_error = 'Page size should not be negative: {}'.format(
             page_size
@@ -105,8 +99,11 @@ class TestNoPaginationProvided(TestPaginationFixtures):
         page_size = None
         page_number = None
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt == paginated_stmt
@@ -114,7 +111,7 @@ class TestNoPaginationProvided(TestPaginationFixtures):
             page_number=1, page_size=8, num_pages=1, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 8
         for i in range(8):
@@ -129,8 +126,11 @@ class TestNoPageNumberProvided(TestPaginationFixtures):
         page_size = 5000
         page_number = None
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -138,7 +138,7 @@ class TestNoPageNumberProvided(TestPaginationFixtures):
             page_number=1, page_size=8, num_pages=1, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 8
         for i in range(8):
@@ -150,8 +150,11 @@ class TestNoPageNumberProvided(TestPaginationFixtures):
         page_size = 2
         page_number = None
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -159,7 +162,7 @@ class TestNoPageNumberProvided(TestPaginationFixtures):
             page_number=1, page_size=2, num_pages=4, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 2
         assert result[0].id == 1
@@ -174,8 +177,11 @@ class TestNoPageSizeProvided(TestPaginationFixtures):
         page_size = None
         page_number = 1
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -183,7 +189,7 @@ class TestNoPageSizeProvided(TestPaginationFixtures):
             page_number=1, page_size=8, num_pages=1, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 8
         for i in range(8):
@@ -195,8 +201,11 @@ class TestNoPageSizeProvided(TestPaginationFixtures):
         stmt = select(Bar)
         page_size = None
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -217,8 +226,11 @@ class TestApplyPagination(TestPaginationFixtures):
         stmt = select(Bar)
         page_size = 0
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -236,8 +248,11 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 0
         page_number = None
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -255,15 +270,18 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 2
         page_number = 3
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
         assert stmt != paginated_stmt
         assert Pagination(
             page_number=3, page_size=2, num_pages=4, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 2
         assert result[0].id == 5
@@ -275,8 +293,11 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 1
         page_number = 5
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -284,7 +305,7 @@ class TestApplyPagination(TestPaginationFixtures):
             page_number=5, page_size=1, num_pages=8, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 1
         assert result[0].id == 5
@@ -297,8 +318,11 @@ class TestApplyPagination(TestPaginationFixtures):
         stmt = select(Bar)
         page_size = 2
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -316,8 +340,11 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 2
         page_number = 4
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -325,7 +352,7 @@ class TestApplyPagination(TestPaginationFixtures):
             page_number=4, page_size=2, num_pages=4, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 2
         assert result[0].id == 7
@@ -337,8 +364,11 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 5
         page_number = 2
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -346,7 +376,7 @@ class TestApplyPagination(TestPaginationFixtures):
             page_number=2, page_size=5, num_pages=2, total_results=8
         ) == pagination
 
-        result = session.execute(paginated_stmt).scalars().all()
+        result = session.scalars(paginated_stmt).all()
 
         assert len(result) == 3
         assert result[0].id == 6
@@ -359,8 +389,11 @@ class TestApplyPagination(TestPaginationFixtures):
         page_size = 2
         page_number = 1
 
+        total_stmt = select(func.count()).select_from(stmt.subquery())
+        total_results = session.scalar(total_stmt)
+
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size, total_results
         )
 
         assert stmt != paginated_stmt
@@ -383,7 +416,7 @@ class TestQueryWithNoResults:
         page_number = 1
 
         paginated_stmt, pagination = apply_pagination(
-            stmt, page_number, page_size, session=session
+            stmt, page_number, page_size
         )
 
         assert stmt != paginated_stmt
@@ -404,8 +437,9 @@ class TestQueryObject(TestPaginationFixtures):
         page_size = 2
         page_number = 3
 
+        total_results = query.count()
         paginated_query, pagination = apply_pagination(
-            query, page_number, page_size
+            query, page_number, page_size, total_results
         )
         assert query != paginated_query
         assert Pagination(

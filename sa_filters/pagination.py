@@ -1,15 +1,29 @@
 # -*- coding: utf-8 -*-
 import math
 from collections import namedtuple
+from typing import Optional, Union
 
-from sqlalchemy import select, func
+from sqlalchemy.sql import Select
 from sqlalchemy.orm import Query
 
 from .exceptions import InvalidPage
 
 
-def apply_pagination(query, page_number=None, page_size=None, session=None):
+Pagination = namedtuple(
+    'Pagination', ['page_number', 'page_size', 'num_pages', 'total_results']
+)
+
+
+def apply_pagination(
+        stmt: Union[Select, Query],
+        page_number: Optional[int] = None,
+        page_size: Optional[int] = None,
+        total_results: int = 0
+) -> tuple[Union[Select, Query], Pagination]:
     """Apply pagination to a SQLAlchemy query or Select object.
+
+    :param stmt:
+        The statement to be processed.
 
     :param page_number:
         Page to be returned (starts and defaults to 1).
@@ -18,9 +32,13 @@ def apply_pagination(query, page_number=None, page_size=None, session=None):
         Maximum number of results to be returned in the page (defaults
         to the total results).
 
+    :param total_results:
+        Total results (defaults to 0).
+
     :returns:
-        A 2-tuple with the paginated SQLAlchemy query or Select object
-        and a pagination namedtuple.
+        A 2-tuple with the paginated SQLAlchemy :class:`sqlalchemy.sql.Select`
+        instance or :class:`sqlalchemy.orm.Query` instance and
+        a pagination namedtuple.
 
         The pagination object contains information about the results
         and pages: ``page_size`` (defaults to ``total_results``),
@@ -29,8 +47,9 @@ def apply_pagination(query, page_number=None, page_size=None, session=None):
 
     Basic usage::
 
-        query, pagination = apply_pagination(query, 1, 10)
-        >>> len(query)
+        >>> stmt, pagination = apply_pagination(stmt, 1, 10, 22)
+        >>> result = session.execute(stmt).all()
+        >>> len(result)
         10
         >>> pagination.page_size
         10
@@ -40,16 +59,15 @@ def apply_pagination(query, page_number=None, page_size=None, session=None):
         3
         >>> pagination.total_results
         22
-        >>> page_size, page_number, num_pages, total_results = pagination
+        >>> page_number, page_size, num_pages, total_results = pagination
     """
-    total_results = _calculate_total_results(query, session)
-    query = _limit(query, page_size)
+    stmt = _limit(stmt, page_size)
 
     # Page size defaults to total results
-    if page_size is None or (page_size > total_results and total_results > 0):
+    if page_size is None or (page_size > total_results > 0):
         page_size = total_results
 
-    query = _offset(query, page_number, page_size)
+    stmt = _offset(stmt, page_number, page_size)
 
     # Page number defaults to 1
     if page_number is None:
@@ -57,35 +75,31 @@ def apply_pagination(query, page_number=None, page_size=None, session=None):
 
     num_pages = _calculate_num_pages(page_number, page_size, total_results)
 
-    Pagination = namedtuple(
-        'Pagination',
-        ['page_number', 'page_size', 'num_pages', 'total_results']
-    )
-    return query, Pagination(page_number, page_size, num_pages, total_results)
+    return stmt, Pagination(page_number, page_size, num_pages, total_results)
 
 
-def _limit(query, page_size):
+def _limit(stmt, page_size):
     if page_size is not None:
         if page_size < 0:
             raise InvalidPage(
                 'Page size should not be negative: {}'.format(page_size)
             )
 
-        query = query.limit(page_size)
+        stmt = stmt.limit(page_size)
 
-    return query
+    return stmt
 
 
-def _offset(query, page_number, page_size):
+def _offset(stmt, page_number, page_size):
     if page_number is not None:
         if page_number < 1:
             raise InvalidPage(
                 'Page number should be positive: {}'.format(page_number)
             )
 
-        query = query.offset((page_number - 1) * page_size)
+        stmt = stmt.offset((page_number - 1) * page_size)
 
-    return query
+    return stmt
 
 
 def _calculate_num_pages(page_number, page_size, total_results):
@@ -93,12 +107,3 @@ def _calculate_num_pages(page_number, page_size, total_results):
         return 0
 
     return math.ceil(float(total_results) / float(page_size))
-
-
-def _calculate_total_results(query, session):
-    if isinstance(query, Query):
-        return query.count()
-
-    return session.execute(
-        select(func.count()).select_from(query.subquery())
-    ).scalar_one()

@@ -277,16 +277,22 @@ Pagination
 
 .. code-block:: python
 
+    from sqlalchemy import func, select
     from sa_filters import apply_pagination
 
 
-    # `query` should be a SQLAlchemy query or Select object
+    # `stmt` should be a SQLAlchemy Select object
 
-    query, pagination = apply_pagination(query, page_number=1, page_size=10)
+    # let's count the number of rows returned by our statement
+    total_stmt = select(func.count()).select_from(stmt.subquery())
+    total_results = session.scalar(total_stmt)
 
-    page_size, page_number, num_pages, total_results = pagination
+    paginated_stmt, pagination = apply_pagination(stmt, page_number=1, page_size=10, total_results=total_results)
+    result = session.execute(paginated_stmt).all()
 
-    assert 10 == len(query)
+    page_number, page_size, num_pages, total_results = pagination
+
+    assert 10 == len(result)
     assert 10 == page_size == pagination.page_size
     assert 1 == page_number == pagination.page_number
     assert 3 == num_pages == pagination.num_pages
@@ -305,15 +311,6 @@ with SQLAlchemy ``Select`` object:
     filtered_stmt = apply_filters(stmt, filter_spec)
 
     result = session.execute(filtered_stmt).scalars().all()
-
-Note that when using ``apply_pagination`` with ``Select`` object,
-you must pass session argument:
-
-.. code-block:: python
-
-    stmt = select(Foo)
-
-    query, pagination = apply_pagination(stmt, page_number=1, page_size=10, session=session)
 
 Filters format
 --------------
