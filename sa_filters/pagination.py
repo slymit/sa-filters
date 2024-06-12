@@ -27,7 +27,8 @@ def apply_pagination(
         page_size: Optional[int] = None,
         total_results: int = 0
 ) -> TupleType[Union[Select, Query], Pagination]:
-    """Apply pagination to a SQLAlchemy query or Select object.
+    """Apply pagination to a SQLAlchemy :class:`sqlalchemy.sql.Select` object
+    or a :class:`sqlalchemy.orm.Query` object.
 
     :param stmt:
         The statement to be processed.

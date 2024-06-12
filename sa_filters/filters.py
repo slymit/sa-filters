@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from collections.abc import Iterable
 from inspect import signature
 from itertools import chain
+from typing import Any, Dict, Iterable, Union
 
 from sqlalchemy import and_, or_, not_, func
+from sqlalchemy.sql import Select
+from sqlalchemy.orm import Query
 
 from .exceptions import BadFilterFormat, BadSpec
 from .models import Field, auto_join, get_model_from_spec, get_default_model, \
@@ -199,13 +201,17 @@ def get_named_models(filters):
     return models
 
 
-def apply_filters(query, filter_spec, do_auto_join=True):
+def apply_filters(
+        query: Union[Select, Query],
+        filter_spec: Union[Iterable[Dict[str, Any]], Dict[str, Any]],
+        do_auto_join: bool = True
+) -> Union[Select, Query]:
     """Apply filters to a SQLAlchemy query or Select object.
 
     :param query:
         The statement to be processed. May be one of:
-        a :class:`sqlalchemy.orm.Query` instance or
-        a :class:`sqlalchemy.sql.expression.Select` instance.
+        a :class:`sqlalchemy.sql.Select` object or
+        a :class:`sqlalchemy.orm.Query` object.
 
     :param filter_spec:
         A dict or an iterable of dicts, where each one includes
@@ -232,10 +238,13 @@ def apply_filters(query, filter_spec, do_auto_join=True):
                 ]
             }
 
+    :param do_auto_join:
+        Allow or not auto join.
+
     :returns:
-        The :class:`sqlalchemy.orm.Query` or
-        the :class:`sqlalchemy.sql.expression.Select`
-        instance after all the filters have been applied.
+        The :class:`sqlalchemy.sql.Select` object or
+        the :class:`sqlalchemy.orm.Query` object
+        after all the filters have been applied.
     """
     filters = build_filters(filter_spec)
 

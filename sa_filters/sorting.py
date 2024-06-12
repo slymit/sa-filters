@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from typing import Any, Dict, List, Union
+
+from sqlalchemy.sql import Select
+from sqlalchemy.orm import Query
+
 from .exceptions import BadSortFormat
 from .models import Field, auto_join, get_model_from_spec, get_default_model
 
@@ -67,9 +72,15 @@ def get_named_models(sorts):
     return models
 
 
-def apply_sort(query, sort_spec):
-    """Apply sorting to a :class:`sqlalchemy.orm.Query` instance or
-    a :class:`sqlalchemy.sql.expression.Select` instance.
+def apply_sort(
+        query: Union[Select, Query],
+        sort_spec: Union[List[Dict[str, Any]], Dict[str, Any]]
+) -> Union[Select, Query]:
+    """Apply sorting to a SQLAlchemy :class:`sqlalchemy.sql.Select`
+    object or a :class:`sqlalchemy.orm.Query` object.
+
+    :param query:
+        The statement to be processed.
 
     :param sort_spec:
         A list of dictionaries, where each one of them includes
@@ -98,8 +109,8 @@ def apply_sort(query, sort_spec):
         may be omitted from the sort spec.
 
     :returns:
-        The :class:`sqlalchemy.orm.Query` instance or
-        the :class:`sqlalchemy.sql.expression.Select` after the provided
+        The :class:`sqlalchemy.sql.Select` object or
+        the :class:`sqlalchemy.orm.Query` object after the provided
         sorting has been applied.
     """
     if isinstance(sort_spec, dict):
