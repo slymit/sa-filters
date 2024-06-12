@@ -22,7 +22,7 @@ setup(
     maintainer_email='slymit@gmail.com',
     url='https://github.com/slymit/sa-filters',
     packages=find_packages(exclude=['test', 'test.*']),
-    install_requires=['sqlalchemy>=1.4.0'],
+    install_requires=['sqlalchemy>=1.4.0', 'setuptools'],
     extras_require={
         'dev': [
             'pytest>=6.2.5',
@@ -49,6 +49,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Database",
         "Topic :: Database :: Front-Ends",
         "Topic :: Software Development :: Libraries :: Python Modules",
