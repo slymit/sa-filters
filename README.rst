@@ -151,7 +151,7 @@ It is also possible to apply filters to queries defined by fields, functions or
 Hybrid attributes
 ^^^^^^^^^^^^^^^^^
 
-You can filter by a `hybrid attribute`_: a `hybrid property`_ or a `hybrid method`_.
+You can filter by a `hybrid attribute`_, a `hybrid property`_ or a `hybrid method`_.
 
 .. code-block:: python
 
@@ -197,7 +197,7 @@ has limited effect in the following scenario:
 
     stmt = select(Foo).join(Bar)
     load_spec = [
-        {'model': 'Foo', 'fields': ['name']}
+        {'model': 'Foo', 'fields': ['name']},
         {'model': 'Bar', 'fields': ['count']}  # ignored
     ]
     stmt = apply_loads(stmt, load_spec)  # will load only Foo.name
@@ -216,7 +216,7 @@ loaded:
 
     stmt = select(Foo).options(joinedload(Foo.bar))
     load_spec = [
-        {'model': 'Foo', 'fields': ['name']}
+        {'model': 'Foo', 'fields': ['name']},
         {'model': 'Bar', 'fields': ['count']}
     ]
     stmt = apply_loads(stmt, load_spec)
