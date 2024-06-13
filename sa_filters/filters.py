@@ -202,13 +202,13 @@ def get_named_models(filters):
 
 
 def apply_filters(
-        query: Union[Select, Query],
+        stmt: Union[Select, Query],
         filter_spec: Union[Iterable[Dict[str, Any]], Dict[str, Any]],
         do_auto_join: bool = True
 ) -> Union[Select, Query]:
     """Apply filters to a SQLAlchemy query or Select object.
 
-    :param query:
+    :param stmt:
         The statement to be processed. May be one of:
         a :class:`sqlalchemy.sql.Select` object or
         a :class:`sqlalchemy.orm.Query` object.
@@ -248,18 +248,18 @@ def apply_filters(
     """
     filters = build_filters(filter_spec)
 
-    default_model = get_default_model(query)
+    default_model = get_default_model(stmt)
 
     filter_models = get_named_models(filters)
     if do_auto_join:
-        query = auto_join(query, *filter_models)
+        stmt = auto_join(stmt, *filter_models)
 
     sqlalchemy_filters = [
-        filter.format_for_sqlalchemy(query, default_model)
+        filter.format_for_sqlalchemy(stmt, default_model)
         for filter in filters
     ]
 
     if sqlalchemy_filters:
-        query = query.filter(*sqlalchemy_filters)
+        stmt = stmt.filter(*sqlalchemy_filters)
 
-    return query
+    return stmt

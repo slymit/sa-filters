@@ -48,13 +48,13 @@ def get_named_models(loads):
 
 
 def apply_loads(
-        query: Union[Select, Query],
+        stmt: Union[Select, Query],
         load_spec: Union[List[Dict[str, Any]], Dict[str, Any], List[str]]
 ) -> Union[Select, Query]:
     """Apply load restrictions to a :class:`sqlalchemy.sql.Select` object
     or a :class:`sqlalchemy.orm.Query` object.
 
-    :param query:
+    :param stmt:
         The statement to be processed.
 
     :param load_spec:
@@ -90,15 +90,15 @@ def apply_loads(
 
     loads = [LoadOnly(item) for item in load_spec]
 
-    default_model = get_default_model(query)
+    default_model = get_default_model(stmt)
 
     load_models = get_named_models(loads)
-    query = auto_join(query, *load_models)
+    stmt = auto_join(stmt, *load_models)
 
     sqlalchemy_loads = [
-        load.format_for_sqlalchemy(query, default_model) for load in loads
+        load.format_for_sqlalchemy(stmt, default_model) for load in loads
     ]
     if sqlalchemy_loads:
-        query = query.options(*sqlalchemy_loads)
+        stmt = stmt.options(*sqlalchemy_loads)
 
-    return query
+    return stmt

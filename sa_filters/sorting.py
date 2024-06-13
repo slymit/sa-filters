@@ -73,13 +73,13 @@ def get_named_models(sorts):
 
 
 def apply_sort(
-        query: Union[Select, Query],
+        stmt: Union[Select, Query],
         sort_spec: Union[List[Dict[str, Any]], Dict[str, Any]]
 ) -> Union[Select, Query]:
     """Apply sorting to a SQLAlchemy :class:`sqlalchemy.sql.Select`
     object or a :class:`sqlalchemy.orm.Query` object.
 
-    :param query:
+    :param stmt:
         The statement to be processed.
 
     :param sort_spec:
@@ -118,16 +118,16 @@ def apply_sort(
 
     sorts = [Sort(item) for item in sort_spec]
 
-    default_model = get_default_model(query)
+    default_model = get_default_model(stmt)
 
     sort_models = get_named_models(sorts)
-    query = auto_join(query, *sort_models)
+    stmt = auto_join(stmt, *sort_models)
 
     sqlalchemy_sorts = [
-        sort.format_for_sqlalchemy(query, default_model) for sort in sorts
+        sort.format_for_sqlalchemy(stmt, default_model) for sort in sorts
     ]
 
     if sqlalchemy_sorts:
-        query = query.order_by(*sqlalchemy_sorts)
+        stmt = stmt.order_by(*sqlalchemy_sorts)
 
-    return query
+    return stmt
