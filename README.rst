@@ -27,7 +27,7 @@ and other improvements.
 Filtering
 ---------
 
-Assuming that we have a SQLAlchemy_ ``query`` object:
+Assuming that we have a SQLAlchemy_ ``Select`` object:
 
 .. code-block:: python
 
@@ -58,26 +58,26 @@ Assuming that we have a SQLAlchemy_ ``query`` object:
 
     # ...
 
-    query = session.query(Foo)
+    stmt = select(Foo)
 
-Then we can apply filters to that ``query`` object (multiple times):
+Then we can apply filters to that ``stmt`` object (multiple times):
 
 .. code-block:: python
 
     from sa_filters import apply_filters
 
 
-    # `query` should be a SQLAlchemy query or Select object
+    # `stmt` should be a SQLAlchemy Select or Query object
 
     filter_spec = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
-    filtered_query = apply_filters(query, filter_spec)
+    filtered_stmt = apply_filters(stmt, filter_spec)
 
     more_filters = [{'field': 'foo_id', 'op': 'is_not_null'}]
-    filtered_query = apply_filters(filtered_query, more_filters)
+    filtered_stmt = apply_filters(filtered_stmt, more_filters)
 
-    result = filtered_query.all()
+    result = session.execute(filtered_stmt).all()
 
-It is also possible to filter queries that contain multiple models,
+It is also possible to filter statements that contain multiple models,
 including joins:
 
 .. code-block:: python
@@ -91,41 +91,40 @@ including joins:
 
 .. code-block:: python
 
-    query = session.query(Foo).join(Bar)
+    stmt = select(Foo).join(Bar)
 
     filter_spec = [
         {'model': 'Foo', 'field': 'name', 'op': '==', 'value': 'name_1'},
         {'model': 'Bar', 'field': 'count', 'op': '>=', 'value': 5},
     ]
-    filtered_query = apply_filters(query, filter_spec)
+    filtered_stmt = apply_filters(stmt, filter_spec)
 
-    result = filtered_query.all()
+    result = session.execute(filtered_stmt).all()
 
-
-``apply_filters`` will attempt to automatically join models to ``query``
+``apply_filters`` will attempt to automatically join models to ``stmt``
 if they're not already present and a model-specific filter is supplied.
-For example, the value of ``filtered_query`` in the following two code
+For example, the value of ``filtered_stmt`` in the following two code
 blocks is identical:
 
 .. code-block:: python
 
-    query = session.query(Foo).join(Bar)  # join pre-applied to query
+    stmt = select(Foo).join(Bar)  # join pre-applied to statement
 
     filter_spec = [
         {'model': 'Foo', 'field': 'name', 'op': '==', 'value': 'name_1'},
         {'model': 'Bar', 'field': 'count', 'op': '>=', 'value': 5},
     ]
-    filtered_query = apply_filters(query, filter_spec)
+    filtered_stmt = apply_filters(stmt, filter_spec)
 
 .. code-block:: python
 
-    query = session.query(Foo)  # join to Bar will be automatically applied
+    stmt = select(Foo)  # join to Bar will be automatically applied
 
     filter_spec = [
         {'field': 'name', 'op': '==', 'value': 'name_1'},
         {'model': 'Bar', 'field': 'count', 'op': '>=', 'value': 5},
     ]
-    filtered_query = apply_filters(query, filter_spec)
+    filtered_stmt = apply_filters(stmt, filter_spec)
 
 The automatic join is only possible if SQLAlchemy_ can implictly
 determine the condition for the join, for example because of a foreign
@@ -145,9 +144,9 @@ It is also possible to apply filters to queries defined by fields, functions or
 
 .. code-block:: python
 
-    query_alt_1 = session.query(Foo.id, Foo.name)
-    query_alt_2 = session.query(func.count(Foo.id))
-    query_alt_3 = session.query().select_from(Foo).add_column(Foo.id)
+    stmt_alt_1 = select(Foo.id, Foo.name)
+    stmt_alt_2 = select(func.count(Foo.id))
+    stmt_alt_3 = select(Foo.id).select_from(Foo)
 
 Hybrid attributes
 ^^^^^^^^^^^^^^^^^
@@ -156,13 +155,13 @@ You can filter by a `hybrid attribute`_: a `hybrid property`_ or a `hybrid metho
 
 .. code-block:: python
 
-    query = session.query(Foo)
+    stmt = select(Foo)
 
     filter_spec = [{'field': 'count_square', 'op': '>=', 'value': 25}]
     filter_spec = [{'field': 'three_times_count', 'op': '>=', 'value': 15}]
 
-    filtered_query = apply_filters(query, filter_spec)
-    result = filtered_query.all()
+    filtered_stmt = apply_filters(stmt, filter_spec)
+    result = session.execute(filtered_stmt).all()
 
 
 Restricted Loads
@@ -173,18 +172,18 @@ using the ``apply_loads`` function:
 
 .. code-block:: python
 
-    query = session.query(Foo, Bar).join(Bar)
+    stmt = select(Foo, Bar).join(Bar)
     load_spec = [
         {'model': 'Foo', 'fields': ['name']},
         {'model': 'Bar', 'fields': ['count']}
     ]
-    query = apply_loads(query, load_spec)  # will load only Foo.name and Bar.count
+    stmt = apply_loads(stmt, load_spec)  # will load only Foo.name and Bar.count
 
 
 The effect of the ``apply_loads`` function is to ``_defer_`` the load
 of any other fields to when/if they're accessed, rather than loading
-them when the query is executed. It only applies to fields that would be
-loaded during normal query execution.
+them when the statement is executed. It only applies to fields that would be
+loaded during normal statement execution.
 
 
 Effect on joined queries
@@ -196,12 +195,12 @@ has limited effect in the following scenario:
 
 .. code-block:: python
 
-    query = session.query(Foo).join(Bar)
+    stmt = select(Foo).join(Bar)
     load_spec = [
         {'model': 'Foo', 'fields': ['name']}
         {'model': 'Bar', 'fields': ['count']}  # ignored
     ]
-    query = apply_loads(query, load_spec)  # will load only Foo.name
+    stmt = apply_loads(stmt, load_spec)  # will load only Foo.name
 
 
 ``apply_loads`` cannot be applied to columns that are loaded as
@@ -215,18 +214,18 @@ loaded:
 
 .. code-block:: python
 
-    query = session.query(Foo).options(joinedload(Foo.bar))
+    stmt = select(Foo).options(joinedload(Foo.bar))
     load_spec = [
         {'model': 'Foo', 'fields': ['name']}
         {'model': 'Bar', 'fields': ['count']}
     ]
-    query = apply_loads(query, load_spec)
+    stmt = apply_loads(stmt, load_spec)
 
 .. sidebar:: Automatic Join
 
     In fact, what happens here is that ``Bar`` is automatically joined
-    to ``query``, because it is determined that ``Bar`` is not part of
-    the original query. The ``load_spec`` therefore has no effect
+    to ``stmt``, because it is determined that ``Bar`` is not part of
+    the original statement. The ``load_spec`` therefore has no effect
     because the automatic join results in lazy evaluation.
 
 If you wish to perform a joined load with restricted columns, you must
@@ -235,11 +234,11 @@ specify the columns as part of the joined load, rather than with
 
 .. code-block:: python
 
-    query = session.query(Foo).options(joinedload(Bar).load_only('count'))
+    stmt = select(Foo).options(joinedload(Bar).load_only('count'))
     load_spec = [
         {'model': 'Foo', 'fields': ['name']}
     ]
-    query = apply_loads(query. load_spec)  # will load ony Foo.name and Bar.count
+    stmt = apply_loads(stmt, load_spec)  # will load ony Foo.name and Bar.count
 
 
 Sort
@@ -250,18 +249,18 @@ Sort
     from sa_filters import apply_sort
 
 
-    # `query` should be a SQLAlchemy query or Select object
+    # `stmt` should be a SQLAlchemy Select or Query object
 
     sort_spec = [
         {'model': 'Foo', 'field': 'name', 'direction': 'asc'},
         {'model': 'Bar', 'field': 'id', 'direction': 'desc'},
     ]
-    sorted_query = apply_sort(query, sort_spec)
+    sorted_stmt = apply_sort(stmt, sort_spec)
 
-    result = sorted_query.all()
+    result = session.scalars(sorted_stmt).all()
 
 
-``apply_sort`` will attempt to automatically join models to ``query`` if
+``apply_sort`` will attempt to automatically join models to ``stmt`` if
 they're not already present and a model-specific sort is supplied.
 The behaviour is the same as in ``apply_filters``.
 
@@ -300,19 +299,19 @@ Pagination
     assert 3 == num_pages == pagination.num_pages
     assert 22 == total_results == pagination.total_results
 
-Select object
+Query object
 -------------
 You can use ``apply_filters``, ``apply_loads``, ``apply_sort`` and ``apply_pagination``
-with SQLAlchemy ``Select`` object:
+with SQLAlchemy ``Query`` object:
 
 .. code-block:: python
 
-    stmt = select(Foo)
+    query = session.query(Foo)
 
     filter_spec = [{'field': 'name', 'op': '==', 'value': 'name_1'}]
-    filtered_stmt = apply_filters(stmt, filter_spec)
+    filtered_query = apply_filters(query, filter_spec)
 
-    result = session.execute(filtered_stmt).scalars().all()
+    result = filtered_query.all()
 
 Filters format
 --------------
