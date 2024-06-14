@@ -204,10 +204,10 @@ has limited effect in the following scenario:
 
 
 ``apply_loads`` cannot be applied to columns that are loaded as
-`joined eager loads <http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#joined-eager-loading>`_.
+`joined eager loads <http://docs.sqlalchemy.org/en/latest/orm/queryguide/relationships.html#joined-eager-loading>`_.
 This is because a joined eager load does not add the joined model to the
 original query, as explained
-`here <http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#the-zen-of-joined-eager-loading>`_
+`here <http://docs.sqlalchemy.org/en/latest/orm/queryguide/relationships.html#the-zen-of-joined-eager-loading>`_
 
 The following would not prevent all columns from ``Bar`` being eagerly
 loaded:
@@ -543,6 +543,6 @@ for details.
 
 .. _sqlalchemy-filters: https://github.com/juliotrigo/sqlalchemy-filters
 .. _SQLAlchemy: https://www.sqlalchemy.org/
-.. _hybrid attribute: https://docs.sqlalchemy.org/en/13/orm/extensions/hybrid.html
-.. _hybrid property: https://docs.sqlalchemy.org/en/13/orm/extensions/hybrid.html#sqlalchemy.ext.hybrid.hybrid_property
-.. _hybrid method: https://docs.sqlalchemy.org/en/13/orm/extensions/hybrid.html#sqlalchemy.ext.hybrid.hybrid_method
+.. _hybrid attribute: https://docs.sqlalchemy.org/en/latest/orm/extensions/hybrid.html
+.. _hybrid property: https://docs.sqlalchemy.org/en/latest/orm/extensions/hybrid.html#sqlalchemy.ext.hybrid.hybrid_property
+.. _hybrid method: https://docs.sqlalchemy.org/en/latest/orm/extensions/hybrid.html#sqlalchemy.ext.hybrid.hybrid_method
