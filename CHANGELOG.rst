@@ -5,6 +5,26 @@ Here you can see the full list of changes between sa-filters
 versions, where semantic versioning is used: *major.minor.patch*.
 
 
+2.0.0
+-----
+
+Released 2024-06-16
+
+* Modify function apply_pagination api
+* Rewrite the README using SQLAlchemy 2.0 style, fix typos and links
+* Rename the param 'query' to 'stmt' in functions apply_filters, apply_loads and apply_sort
+* Rename variables in tests
+* Add python 3.12 support
+* Add typing and improve docstrings for public functions
+* Add tests for python 3.11
+* Add containers target to Makefile
+* Add 'downloads' badge
+* Fix TypeError: 'type' object is not subscriptable if using python versions 3.7 or 3.8
+* Fixed coverage for Python 3.11
+* Bump postgres and mysql dev containers to the latest version
+* Bump psycopg2 to the version 2.9.9
+* Bump GitHub Action Setup Python to v5 and Checkout to v4
+
 1.3.0
 -----
 
