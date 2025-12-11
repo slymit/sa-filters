@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     name: ${{ matrix.tox_env }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
 
     services:
       mariadb:
@@ -42,6 +42,7 @@ jobs:
         include:
           - python: '3.7'
             tox_env: 'py37-sqlalchemy1.4'
+            os: 'ubuntu-22.04'
           - python: '3.8'
             tox_env: 'py38-sqlalchemy1.4'
           - python: '3.9'
@@ -57,6 +58,7 @@ jobs:
 
           - python: '3.7'
             tox_env: 'py37-sqlalchemy2.0'
+            os: 'ubuntu-22.04'
           - python: '3.8'
             tox_env: 'py38-sqlalchemy2.0'
           - python: '3.9'
@@ -87,8 +89,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: 3.7
       - name: Install pypa/build
         run: >-
           python -m
