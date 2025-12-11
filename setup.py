@@ -34,7 +34,7 @@ setup(
             'Pygments',
         ],
         'mysql': ['mysql-connector-python-rf==2.2.2'],
-        'postgresql': ['psycopg2==2.9.9'],
+        'postgresql': ['psycopg2~=2.9.9'],
     },
     zip_safe=True,
     license='Apache License, Version 2.0',
