@@ -55,6 +55,8 @@ jobs:
             tox_env: 'py312-sqlalchemy1.4'
           - python: '3.13'
             tox_env: 'py313-sqlalchemy1.4'
+          - python: '3.14'
+            tox_env: 'py314-sqlalchemy1.4'
 
           - python: '3.7'
             tox_env: 'py37-sqlalchemy2.0'
@@ -71,6 +73,8 @@ jobs:
             tox_env: 'py312-sqlalchemy2.0'
           - python: '3.13'
             tox_env: 'py313-sqlalchemy2.0'
+          - python: '3.14'
+            tox_env: 'py314-sqlalchemy2.0'
 
     steps:
       - uses: actions/checkout@v4
