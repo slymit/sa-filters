@@ -28,7 +28,7 @@ setup(
             'pytest>=6.2.5',
             'packaging>=23.1',
             'coverage>=7.0.0',
-            'sqlalchemy-utils~=0.41.1',
+            'sqlalchemy-utils~=0.42.1',
             'flake8',
             'restructuredtext-lint',
             'Pygments',
