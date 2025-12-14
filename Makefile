@@ -9,7 +9,7 @@ rst-lint:
 	rst-lint CHANGELOG.rst
 
 flake8:
-	flake8 sa_filters test setup.py
+	flake8 sa_filters test
 
 test: flake8
 	pytest test $(ARGS)
