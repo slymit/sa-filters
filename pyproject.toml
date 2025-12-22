@@ -9,14 +9,16 @@ authors = [
 maintainers = [
   {name = "slymit", email = "slymit@gmail.com"}
 ]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = [
+    "LICENSE",
+]
 requires-python = ">=3.7"
 dependencies = [
   "sqlalchemy>=1.4.24",
 ]
 classifiers = [
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
