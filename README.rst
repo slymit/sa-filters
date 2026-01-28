@@ -5,7 +5,7 @@ sa-filters
 Filter, sort and paginate SQLAlchemy query objects. Ideal for
 exposing these actions over a REST API.
 
-This project is fork of sqlalchemy-filters_ with sqlalchemy 1.4 and 2.0 support
+This project is a fork of sqlalchemy-filters_ with sqlalchemy 1.4 and 2.0 support
 and other improvements.
 
 
