@@ -5,6 +5,24 @@ Here you can see the full list of changes between sa-filters
 versions, where semantic versioning is used: *major.minor.patch*.
 
 
+2.1.0
+-----
+
+Released 2026-01-30
+
+* Bump pypa/gh-action-pypi-publish from 1.5.0 to 1.13.0
+* Migrate tox.ini and setup.py to pyproject.toml
+* Fix grammar in README
+* Migrate license metadata to PEP 639 style
+* Set skip_install for py37 and py38
+* Bump actions/setup-python from 5 to 6
+* Bump actions/checkout from 4 to 6
+* Add Dependabot
+* Fix minimum version of sqlalchemy in install_requires
+* Add support for Python 3.13 and 3.14
+* Bump psycopg2
+* Fix error in CI: The version '3.7' with architecture 'x64' was not found for Ubuntu 24.04
+
 2.0.0
 -----
 
