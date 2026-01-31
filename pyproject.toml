@@ -13,7 +13,7 @@ license = "Apache-2.0"
 license-files = [
     "LICENSE",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = [
   "sqlalchemy>=1.4.24",
 ]
@@ -22,9 +22,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -68,9 +65,8 @@ exclude = ["test", "test.*"]
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    requires = tox-extras
     minversion = 4.6.4
-    envlist = {py37,py38,py39,py310,py311,py312,py313,py314}-sqlalchemy{1.4,2.0}
+    envlist = {py310,py311,py312,py313,py314}-sqlalchemy{1.4,2.0}
 
     [testenv]
     allowlist_externals = make
@@ -80,16 +76,9 @@ legacy_tox_ini = """
         mysql
         postgresql
     deps =
-        {py37,py38,py39,py310,py311,py312,py313,py314}: pytest~=5.4.1
+        {py310,py311,py312,py313,py314}: pytest~=5.4.1
         sqlalchemy1.4: sqlalchemy>=1.4,<2.0
         sqlalchemy2.0: sqlalchemy>=2.0
     commands =
         make coverage ARGS='-x -vv'
-
-    [testenv:{py37,py38}-sqlalchemy{1.4,2.0}]
-    skip_install = true
-    tox_extras =
-        dev
-        mysql
-        postgresql
 """

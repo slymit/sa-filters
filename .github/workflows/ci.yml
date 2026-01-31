@@ -40,13 +40,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: '3.7'
-            tox_env: 'py37-sqlalchemy1.4'
-            os: 'ubuntu-22.04'
-          - python: '3.8'
-            tox_env: 'py38-sqlalchemy1.4'
-          - python: '3.9'
-            tox_env: 'py39-sqlalchemy1.4'
           - python: '3.10'
             tox_env: 'py310-sqlalchemy1.4'
           - python: '3.11'
@@ -58,13 +51,6 @@ jobs:
           - python: '3.14'
             tox_env: 'py314-sqlalchemy1.4'
 
-          - python: '3.7'
-            tox_env: 'py37-sqlalchemy2.0'
-            os: 'ubuntu-22.04'
-          - python: '3.8'
-            tox_env: 'py38-sqlalchemy2.0'
-          - python: '3.9'
-            tox_env: 'py39-sqlalchemy2.0'
           - python: '3.10'
             tox_env: 'py310-sqlalchemy2.0'
           - python: '3.11'

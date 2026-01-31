@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 import math
 from collections import namedtuple
-import sys
 from typing import Optional, Union
 
 from sqlalchemy.sql import Select
 from sqlalchemy.orm import Query
 
 from .exceptions import InvalidPage
-
-
-if sys.version_info < (3, 9):  # pragma: nocover
-    from typing import Tuple as TupleType
-else:  # pragma: nocover
-    TupleType = tuple
 
 
 Pagination = namedtuple(
@@ -26,7 +19,7 @@ def apply_pagination(
         page_number: Optional[int] = None,
         page_size: Optional[int] = None,
         total_results: int = 0
-) -> TupleType[Union[Select, Query], Pagination]:
+) -> tuple[Union[Select, Query], Pagination]:
     """Apply pagination to a SQLAlchemy :class:`sqlalchemy.sql.Select` object
     or a :class:`sqlalchemy.orm.Query` object.
 
