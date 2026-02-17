@@ -39,7 +39,7 @@ Homepage = "https://github.com/slymit/sa-filters"
 dev = [
   "pytest>=6.2.5",
   "packaging>=23.1",
-  "coverage>=7.0.0",
+  "pytest-cov>=7.0.0",
   "sqlalchemy-utils~=0.41.1",
   "flake8",
   "restructuredtext-lint",
