@@ -15,8 +15,7 @@ test: flake8
 	pytest test $(ARGS)
 
 coverage: flake8 rst-lint
-	coverage run --source sa_filters -m pytest test $(ARGS)
-	coverage report --show-missing --fail-under 100
+	pytest --cov=sa_filters --cov-report=xml --cov-report=term-missing --cov-fail-under=100 test $(ARGS)
 
 
 # Docker test containers
