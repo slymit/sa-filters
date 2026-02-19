@@ -74,6 +74,21 @@ jobs:
       - run: pip install tox
       - run: tox -e ${{ matrix.tox_env }}
 
+      - name: Upload coverage to Codecov
+        if: matrix.python == '3.14' && matrix.tox_env == 'py314-sqlalchemy2.0'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: matrix.python == '3.14' && matrix.tox_env == 'py314-sqlalchemy2.0' && !cancelled()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+
   deploy:
     name: Build and publish
     runs-on: ubuntu-latest
