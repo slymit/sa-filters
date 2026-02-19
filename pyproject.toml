@@ -80,5 +80,5 @@ legacy_tox_ini = """
         sqlalchemy1.4: sqlalchemy>=1.4,<2.0
         sqlalchemy2.0: sqlalchemy>=2.0
     commands =
-        make coverage ARGS='-x -vv'
+        make coverage ARGS='--junitxml=junit.xml -o junit_family=legacy -x -vv'
 """
