@@ -21,6 +21,9 @@ and other improvements.
 .. image:: https://github.com/slymit/sa-filters/actions/workflows/ci.yml/badge.svg?branch=main
     :target: https://github.com/slymit/sa-filters/actions
 
+.. image:: https://codecov.io/github/slymit/sa-filters/graph/badge.svg?token=HK2F0MYVAC
+    :target: https://codecov.io/github/slymit/sa-filters
+
 .. image:: https://static.pepy.tech/badge/sa-filters
     :target: https://pepy.tech/project/sa-filters
 
