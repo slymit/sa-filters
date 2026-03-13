@@ -132,6 +132,8 @@ def connection(db_uri, db_engine_options, is_postgresql):
     yield connection
 
     Base.metadata.drop_all(bind=engine)
+    connection.close()
+    engine.dispose()
     destroy_database(db_uri)
 
 
