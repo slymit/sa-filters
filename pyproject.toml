@@ -41,7 +41,7 @@ dev = [
   "packaging>=23.1",
   "pytest-cov>=7.0.0",
   "sqlalchemy-utils>=0.41.1,<0.43.0",
-  "flake8",
+  "ruff",
   "restructuredtext-lint",
   "Pygments",
 ]
@@ -61,6 +61,14 @@ zip-safe = true
 
 [tool.setuptools.packages.find]
 exclude = ["test", "test.*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+lines-after-imports = 2
 
 [tool.tox]
 legacy_tox_ini = """

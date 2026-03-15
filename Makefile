@@ -8,13 +8,18 @@ rst-lint:
 	rst-lint README.rst
 	rst-lint CHANGELOG.rst
 
-flake8:
-	flake8 sa_filters test
+lint:
+	ruff check sa_filters test
+	ruff format --check --diff sa_filters test
 
-test: flake8
+format:
+	ruff check --fix sa_filters test
+	ruff format sa_filters test
+
+test: lint
 	pytest test $(ARGS)
 
-coverage: flake8 rst-lint
+coverage: lint rst-lint
 	pytest --cov=sa_filters --cov-report=xml --cov-report=term-missing --cov-fail-under=100 test $(ARGS)
 
 
