@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import (
-    Column, Date, DateTime, ForeignKey, Integer, String, Time
-)
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, Time
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
+from sqlalchemy.orm import declarative_base, relationship
 
 
 class Base(object):
@@ -28,29 +25,25 @@ BasePostgresqlSpecific = declarative_base(cls=Base)
 
 
 class Foo(Base):
+    __tablename__ = "foo"
 
-    __tablename__ = 'foo'
-
-    bar_id = Column(Integer, ForeignKey('bar.id'), nullable=True)
-    bar = relationship('Bar', back_populates='foos')
+    bar_id = Column(Integer, ForeignKey("bar.id"), nullable=True)
+    bar = relationship("Bar", back_populates="foos")
 
 
 class Bar(Base):
-
-    __tablename__ = 'bar'
-    foos = relationship('Foo', back_populates='bar')
+    __tablename__ = "bar"
+    foos = relationship("Foo", back_populates="bar")
 
 
 class Baz(Base):
+    __tablename__ = "baz"
 
-    __tablename__ = 'baz'
-
-    qux_id = Column(Integer, ForeignKey('qux.id'), nullable=True)
+    qux_id = Column(Integer, ForeignKey("qux.id"), nullable=True)
 
 
 class Qux(Base):
-
-    __tablename__ = 'qux'
+    __tablename__ = "qux"
 
     created_at = Column(Date)
     execution_time = Column(DateTime)
@@ -58,7 +51,6 @@ class Qux(Base):
 
 
 class Corge(BasePostgresqlSpecific):
-
-    __tablename__ = 'corge'
+    __tablename__ = "corge"
 
     tags = Column(ARRAY(String, dimensions=1))

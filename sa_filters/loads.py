@@ -1,31 +1,30 @@
 from typing import Any, Dict, List, Union
 
-from sqlalchemy.sql import Select
 from sqlalchemy.orm import Load, Query
+from sqlalchemy.sql import Select
 
 from .exceptions import BadLoadFormat
-from .models import Field, auto_join, get_model_from_spec, get_default_model
+from .models import Field, auto_join, get_default_model, get_model_from_spec
 
 
 class LoadOnly(object):
-
     def __init__(self, load_spec):
         self.load_spec = load_spec
 
         try:
-            field_names = load_spec['fields']
+            field_names = load_spec["fields"]
         except KeyError:
-            raise BadLoadFormat('`fields` is a mandatory attribute.')
+            raise BadLoadFormat("`fields` is a mandatory attribute.") from None
         except TypeError:
             raise BadLoadFormat(
-                'Load spec `{}` should be a dictionary.'.format(load_spec)
-            )
+                "Load spec `{}` should be a dictionary.".format(load_spec)
+            ) from None
 
         self.field_names = field_names
 
     def get_named_models(self):
         if "model" in self.load_spec:
-            return {self.load_spec['model']}
+            return {self.load_spec["model"]}
         return set()
 
     def format_for_sqlalchemy(self, query, default_model):
@@ -48,8 +47,8 @@ def get_named_models(loads):
 
 
 def apply_loads(
-        stmt: Union[Select, Query],
-        load_spec: Union[List[Dict[str, Any]], Dict[str, Any], List[str]]
+    stmt: Union[Select, Query],
+    load_spec: Union[List[Dict[str, Any]], Dict[str, Any], List[str]],
 ) -> Union[Select, Query]:
     """Apply load restrictions to a :class:`sqlalchemy.sql.Select` object
     or a :class:`sqlalchemy.orm.Query` object.
@@ -79,11 +78,10 @@ def apply_loads(
         a :class:`sqlalchemy.orm.Query` object
         after the load restrictions have been applied.
     """
-    if (
-        isinstance(load_spec, list) and
-        all(map(lambda item: isinstance(item, str), load_spec))
+    if isinstance(load_spec, list) and all(
+        map(lambda item: isinstance(item, str), load_spec)
     ):
-        load_spec = {'fields': load_spec}
+        load_spec = {"fields": load_spec}
 
     if isinstance(load_spec, dict):
         load_spec = [load_spec]

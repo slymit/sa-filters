@@ -4,22 +4,27 @@ from inspect import signature
 from itertools import chain
 from typing import Any, Dict, Iterable, Union
 
-from sqlalchemy import and_, or_, not_, func
-from sqlalchemy.sql import Select
+from sqlalchemy import and_, func, not_, or_
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import Select
 
 from .exceptions import BadFilterFormat, BadSpec
-from .models import Field, auto_join, get_model_from_spec, get_default_model, \
-    get_class_by_tablename
+from .models import (
+    Field,
+    auto_join,
+    get_class_by_tablename,
+    get_default_model,
+    get_model_from_spec,
+)
 
 
 BooleanFunction = namedtuple(
-    'BooleanFunction', ('key', 'sqlalchemy_fn', 'only_one_arg')
+    "BooleanFunction", ("key", "sqlalchemy_fn", "only_one_arg")
 )
 BOOLEAN_FUNCTIONS = [
-    BooleanFunction('or', or_, False),
-    BooleanFunction('and', and_, False),
-    BooleanFunction('not', not_, True),
+    BooleanFunction("or", or_, False),
+    BooleanFunction("and", and_, False),
+    BooleanFunction("not", not_, True),
 ]
 """
 Sqlalchemy boolean functions that can be parsed from the filter definition.
@@ -27,37 +32,36 @@ Sqlalchemy boolean functions that can be parsed from the filter definition.
 
 
 class Operator(object):
-
     OPERATORS = {
-        'is_null': lambda f: f.is_(None),
-        'is_not_null': lambda f: f.isnot(None),
-        '==': lambda f, a: f == a,
-        'eq': lambda f, a: f == a,
-        '!=': lambda f, a: f != a,
-        'ne': lambda f, a: f != a,
-        '>': lambda f, a: f > a,
-        'gt': lambda f, a: f > a,
-        '<': lambda f, a: f < a,
-        'lt': lambda f, a: f < a,
-        '>=': lambda f, a: f >= a,
-        'ge': lambda f, a: f >= a,
-        '<=': lambda f, a: f <= a,
-        'le': lambda f, a: f <= a,
-        'like': lambda f, a: f.like(a),
-        'ilike': lambda f, a: f.ilike(a),
-        'not_ilike': lambda f, a: ~f.ilike(a),
-        'in': lambda f, a: f.in_(a),
-        'not_in': lambda f, a: ~f.in_(a),
-        'any': lambda f, a: f.any(a),
-        'not_any': lambda f, a: func.not_(f.any(a)),
+        "is_null": lambda f: f.is_(None),
+        "is_not_null": lambda f: f.isnot(None),
+        "==": lambda f, a: f == a,
+        "eq": lambda f, a: f == a,
+        "!=": lambda f, a: f != a,
+        "ne": lambda f, a: f != a,
+        ">": lambda f, a: f > a,
+        "gt": lambda f, a: f > a,
+        "<": lambda f, a: f < a,
+        "lt": lambda f, a: f < a,
+        ">=": lambda f, a: f >= a,
+        "ge": lambda f, a: f >= a,
+        "<=": lambda f, a: f <= a,
+        "le": lambda f, a: f <= a,
+        "like": lambda f, a: f.like(a),
+        "ilike": lambda f, a: f.ilike(a),
+        "not_ilike": lambda f, a: ~f.ilike(a),
+        "in": lambda f, a: f.in_(a),
+        "not_in": lambda f, a: ~f.in_(a),
+        "any": lambda f, a: f.any(a),
+        "not_any": lambda f, a: func.not_(f.any(a)),
     }
 
     def __init__(self, operator=None):
         if not operator:
-            operator = '=='
+            operator = "=="
 
         if operator not in self.OPERATORS:
-            raise BadFilterFormat('Operator `{}` not valid.'.format(operator))
+            raise BadFilterFormat("Operator `{}` not valid.".format(operator))
 
         self.operator = operator
         self.function = self.OPERATORS[operator]
@@ -65,38 +69,35 @@ class Operator(object):
 
 
 class Filter(object):
-
     def __init__(self, filter_spec):
         self.filter_spec = filter_spec
 
         try:
-            filter_spec['field']
+            filter_spec["field"]
         except KeyError:
-            raise BadFilterFormat('`field` is a mandatory filter attribute.')
+            raise BadFilterFormat("`field` is a mandatory filter attribute.") from None
         except TypeError:
             raise BadFilterFormat(
-                'Filter spec `{}` should be a dictionary.'.format(filter_spec)
-            )
+                "Filter spec `{}` should be a dictionary.".format(filter_spec)
+            ) from None
 
-        self.operator = Operator(filter_spec.get('op'))
-        self.value = filter_spec.get('value')
-        value_present = True if 'value' in filter_spec else False
+        self.operator = Operator(filter_spec.get("op"))
+        self.value = filter_spec.get("value")
+        value_present = True if "value" in filter_spec else False
         if not value_present and self.operator.arity == 2:
-            raise BadFilterFormat('`value` must be provided.')
+            raise BadFilterFormat("`value` must be provided.")
 
     def get_named_models(self):
-        if all(k in self.filter_spec for k in ('model', 'table')):
-            raise BadFilterFormat(
-                'Only one field `model` or `table` must be provided.'
-            )
+        if all(k in self.filter_spec for k in ("model", "table")):
+            raise BadFilterFormat("Only one field `model` or `table` must be provided.")
         elif "model" in self.filter_spec:
-            return {self.filter_spec['model']}
+            return {self.filter_spec["model"]}
         elif "table" in self.filter_spec:
-            model = get_class_by_tablename(self.filter_spec['table'])
+            model = get_class_by_tablename(self.filter_spec["table"])
             if model is None:
                 raise BadSpec(
-                    'The query does not contain table `{}`.'.format(
-                        self.filter_spec['table']
+                    "The query does not contain table `{}`.".format(
+                        self.filter_spec["table"]
                     )
                 )
             return {model.__name__}
@@ -113,7 +114,7 @@ class Filter(object):
         function = operator.function
         arity = operator.arity
 
-        field_name = self.filter_spec['field']
+        field_name = self.filter_spec["field"]
         field = Field(model, field_name)
         sqlalchemy_field = field.get_sqlalchemy_field()
 
@@ -125,7 +126,6 @@ class Filter(object):
 
 
 class BooleanFilter(object):
-
     def __init__(self, function, *filters):
         self.function = function
         self.filters = filters
@@ -137,28 +137,26 @@ class BooleanFilter(object):
         return models
 
     def format_for_sqlalchemy(self, query, default_model):
-        return self.function(*[
-            filter.format_for_sqlalchemy(query, default_model)
-            for filter in self.filters
-        ])
+        return self.function(
+            *[
+                filter.format_for_sqlalchemy(query, default_model)
+                for filter in self.filters
+            ]
+        )
 
 
 def _is_iterable_filter(filter_spec):
-    """ `filter_spec` may be a list of nested filter specs, or a dict.
-    """
-    return (
-        isinstance(filter_spec, Iterable) and
-        not isinstance(filter_spec, (str, dict))
+    """`filter_spec` may be a list of nested filter specs, or a dict."""
+    return isinstance(filter_spec, Iterable) and not isinstance(
+        filter_spec, (str, dict)
     )
 
 
 def build_filters(filter_spec):
-    """ Recursively process `filter_spec` """
+    """Recursively process `filter_spec`"""
 
     if _is_iterable_filter(filter_spec):
-        return list(chain.from_iterable(
-            build_filters(item) for item in filter_spec
-        ))
+        return list(chain.from_iterable(build_filters(item) for item in filter_spec))
 
     if isinstance(filter_spec, dict):
         # Check if filter spec defines a boolean function.
@@ -170,18 +168,16 @@ def build_filters(filter_spec):
 
                 if not _is_iterable_filter(fn_args):
                     raise BadFilterFormat(
-                        '`{}` value must be an iterable across the function '
-                        'arguments'.format(boolean_function.key)
+                        "`{}` value must be an iterable across the function "
+                        "arguments".format(boolean_function.key)
                     )
                 if boolean_function.only_one_arg and len(fn_args) != 1:
                     raise BadFilterFormat(
-                        '`{}` must have one argument'.format(
-                            boolean_function.key
-                        )
+                        "`{}` must have one argument".format(boolean_function.key)
                     )
                 if not boolean_function.only_one_arg and len(fn_args) < 1:
                     raise BadFilterFormat(
-                        '`{}` must have one or more arguments'.format(
+                        "`{}` must have one or more arguments".format(
                             boolean_function.key
                         )
                     )
@@ -202,9 +198,9 @@ def get_named_models(filters):
 
 
 def apply_filters(
-        stmt: Union[Select, Query],
-        filter_spec: Union[Iterable[Dict[str, Any]], Dict[str, Any]],
-        do_auto_join: bool = True
+    stmt: Union[Select, Query],
+    filter_spec: Union[Iterable[Dict[str, Any]], Dict[str, Any]],
+    do_auto_join: bool = True,
 ) -> Union[Select, Query]:
     """Apply filters to a SQLAlchemy query or Select object.
 
@@ -255,8 +251,7 @@ def apply_filters(
         stmt = auto_join(stmt, *filter_models)
 
     sqlalchemy_filters = [
-        filter.format_for_sqlalchemy(stmt, default_model)
-        for filter in filters
+        filter.format_for_sqlalchemy(stmt, default_model) for filter in filters
     ]
 
     if sqlalchemy_filters:
