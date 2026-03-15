@@ -1,39 +1,38 @@
 # -*- coding: utf-8 -*-
 import pytest
-from sqlalchemy import select, LABEL_STYLE_TABLENAME_PLUS_COL
-from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import ArgumentError
 from packaging.version import Version
+from sqlalchemy import LABEL_STYLE_TABLENAME_PLUS_COL, select
+from sqlalchemy.exc import ArgumentError
+from sqlalchemy.orm import joinedload
 
 from sa_filters import apply_loads
 from sa_filters.exceptions import BadLoadFormat, BadSpec, FieldNotFound
-from test.models import Foo, Bar
-from test import error_value, SQLALCHEMY_VERSION
+from test import SQLALCHEMY_VERSION, error_value
+from test.models import Bar, Foo
 
 
 @pytest.fixture
 def multiple_bars_inserted(session):
-    bar_1 = Bar(id=1, name='name_1', count=5)
-    bar_2 = Bar(id=2, name='name_2', count=10)
-    bar_3 = Bar(id=3, name='name_1', count=None)
-    bar_4 = Bar(id=4, name='name_4', count=15)
+    bar_1 = Bar(id=1, name="name_1", count=5)
+    bar_2 = Bar(id=2, name="name_2", count=10)
+    bar_3 = Bar(id=3, name="name_1", count=None)
+    bar_4 = Bar(id=4, name="name_4", count=15)
     session.add_all([bar_1, bar_2, bar_3, bar_4])
     session.commit()
 
 
 @pytest.fixture
 def multiple_foos_inserted(multiple_bars_inserted, session):
-    foo_1 = Foo(id=1, name='name_1', count=5, bar_id=1)
-    foo_2 = Foo(id=2, name='name_2', count=10, bar_id=2)
-    foo_3 = Foo(id=3, name='name_1', count=None, bar_id=3)
-    foo_4 = Foo(id=4, name='name_4', count=15, bar_id=4)
+    foo_1 = Foo(id=1, name="name_1", count=5, bar_id=1)
+    foo_2 = Foo(id=2, name="name_2", count=10, bar_id=2)
+    foo_3 = Foo(id=3, name="name_1", count=None, bar_id=3)
+    foo_4 = Foo(id=4, name="name_4", count=15, bar_id=4)
     session.add_all([foo_1, foo_2, foo_3, foo_4])
     session.commit()
 
 
 class TestLoadNotApplied(object):
-
-    @pytest.mark.parametrize('spec', [1, []])
+    @pytest.mark.parametrize("spec", [1, []])
     def test_wrong_spec_format(self, session, spec):
         stmt = select(Bar)
         load_spec = [spec]
@@ -41,7 +40,7 @@ class TestLoadNotApplied(object):
         with pytest.raises(BadLoadFormat) as err:
             apply_loads(stmt, load_spec)
 
-        expected_error = 'Load spec `{}` should be a dictionary.'.format(spec)
+        expected_error = "Load spec `{}` should be a dictionary.".format(spec)
         assert expected_error == error_value(err)
 
     def test_field_not_provided(self, session):
@@ -51,12 +50,12 @@ class TestLoadNotApplied(object):
         with pytest.raises(BadLoadFormat) as err:
             apply_loads(stmt, load_spec)
 
-        expected_error = '`fields` is a mandatory attribute.'
+        expected_error = "`fields` is a mandatory attribute."
         assert expected_error == error_value(err)
 
     def test_invalid_field(self, session):
         stmt = select(Bar)
-        load_spec = [{'fields': ['invalid_field']}]
+        load_spec = [{"fields": ["invalid_field"]}]
 
         with pytest.raises(FieldNotFound) as err:
             apply_loads(stmt, load_spec)
@@ -68,7 +67,6 @@ class TestLoadNotApplied(object):
 
 
 class TestLoadsApplied(object):
-
     def test_no_load_provided(self, session):
         stmt = select(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         load_spec = []
@@ -76,33 +74,23 @@ class TestLoadsApplied(object):
         restricted_stmt = apply_loads(stmt, load_spec)
 
         # defers all fields
-        expected = (
-            "SELECT bar.id AS bar_id \n"
-            "FROM bar"
-        )
+        expected = "SELECT bar.id AS bar_id \nFROM bar"
         assert str(restricted_stmt) == expected
 
     def test_single_value(self, session):
 
         stmt = select(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
-        loads = [
-            {'fields': ['name']}
-        ]
+        loads = [{"fields": ["name"]}]
 
         restricted_stmt = apply_loads(stmt, loads)
 
-        expected = (
-            "SELECT bar.id AS bar_id, bar.name AS bar_name \n"
-            "FROM bar"
-        )
+        expected = "SELECT bar.id AS bar_id, bar.name AS bar_name \nFROM bar"
         assert str(restricted_stmt) == expected
 
     def test_multiple_values_single_model(self, session):
 
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
-        loads = [
-            {'fields': ['name', 'count']}
-        ]
+        loads = [{"fields": ["name", "count"]}]
 
         restricted_stmt = apply_loads(stmt, loads)
 
@@ -117,8 +105,8 @@ class TestLoadsApplied(object):
 
         stmt = select(Foo, Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
-            {'model': 'Foo', 'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
+            {"model": "Foo", "fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
 
         restricted_stmt = apply_loads(stmt, loads)
@@ -132,11 +120,12 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_multiple_models_joined(self, session, db_uri):
 
-        stmt = select(Foo, Bar).join(Bar).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = (
+            select(Foo, Bar).join(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        )
         loads = [
-            {'model': 'Foo', 'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
+            {"model": "Foo", "fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
 
         restricted_stmt = apply_loads(stmt, loads)
@@ -155,11 +144,10 @@ class TestLoadsApplied(object):
 
     def test_multiple_values_multiple_models_lazy_load(self, session, db_uri):
 
-        stmt = select(Foo).join(Bar).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = select(Foo).join(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
-            {'model': 'Foo', 'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
+            {"model": "Foo", "fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
 
         restricted_stmt = apply_loads(stmt, loads)
@@ -178,16 +166,17 @@ class TestLoadsApplied(object):
             with pytest.raises(ArgumentError) as err:
                 str(restricted_stmt)
 
-            assert \
-                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
-                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
-                'Please specify the full path from one of the root entities ' \
-                'to the target attribute. ' == err.value.args[0]
+            assert (
+                "Mapped class Mapper[Bar(bar)] does not apply to any "
+                "of the root entities in this query, e.g. Mapper[Foo(foo)]. "
+                "Please specify the full path from one of the root entities "
+                "to the target attribute. " == err.value.args[0]
+            )
 
     def test_a_single_dict_can_be_supplied_as_load_spec(self, session):
 
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
-        load_spec = {'fields': ['name', 'count']}
+        load_spec = {"fields": ["name", "count"]}
 
         restricted_stmt = apply_loads(stmt, load_spec)
 
@@ -201,7 +190,7 @@ class TestLoadsApplied(object):
     def test_a_list_of_fields_can_be_supplied_as_load_spec(self, session):
 
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
-        load_spec = ['name', 'count']
+        load_spec = ["name", "count"]
 
         restricted_stmt = apply_loads(stmt, load_spec)
 
@@ -214,11 +203,14 @@ class TestLoadsApplied(object):
 
     def test_eager_load(self, session, db_uri):
 
-        stmt = select(Foo).options(joinedload(Foo.bar)).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = (
+            select(Foo)
+            .options(joinedload(Foo.bar))
+            .set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        )
         load_spec = [
-            {'model': 'Foo', 'fields': ['name']},
-            {'model': 'Bar', 'fields': ['count']}
+            {"model": "Foo", "fields": ["name"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
         restricted_stmt = apply_loads(stmt, load_spec)
 
@@ -243,22 +235,22 @@ class TestLoadsApplied(object):
             with pytest.raises(ArgumentError) as err:
                 str(restricted_stmt)
 
-            assert \
-                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
-                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
-                'Please specify the full path from one of the root entities ' \
-                'to the target attribute. ' == err.value.args[0]
+            assert (
+                "Mapped class Mapper[Bar(bar)] does not apply to any "
+                "of the root entities in this query, e.g. Mapper[Foo(foo)]. "
+                "Please specify the full path from one of the root entities "
+                "to the target attribute. " == err.value.args[0]
+            )
 
 
 class TestAutoJoin:
-
-    @pytest.mark.usefixtures('multiple_foos_inserted')
+    @pytest.mark.usefixtures("multiple_foos_inserted")
     def test_auto_join(self, session, db_uri):
 
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
         loads = [
-            {'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
+            {"fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
 
         restricted_stmt = apply_loads(stmt, loads)
@@ -277,20 +269,22 @@ class TestAutoJoin:
             with pytest.raises(ArgumentError) as err:
                 str(restricted_stmt)
 
-            assert \
-                'Mapped class Mapper[Bar(bar)] does not apply to any ' \
-                'of the root entities in this query, e.g. Mapper[Foo(foo)]. ' \
-                'Please specify the full path from one of the root entities ' \
-                'to the target attribute. ' == err.value.args[0]
+            assert (
+                "Mapped class Mapper[Bar(bar)] does not apply to any "
+                "of the root entities in this query, e.g. Mapper[Foo(foo)]. "
+                "Please specify the full path from one of the root entities "
+                "to the target attribute. " == err.value.args[0]
+            )
 
-    @pytest.mark.usefixtures('multiple_foos_inserted')
+    @pytest.mark.usefixtures("multiple_foos_inserted")
     def test_noop_if_query_contains_named_models(self, session, db_uri):
 
-        stmt = select(Foo, Bar).join(Bar).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = (
+            select(Foo, Bar).join(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        )
         loads = [
-            {'model': 'Foo', 'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
+            {"model": "Foo", "fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
         ]
 
         restricted_stmt = apply_loads(stmt, loads)
@@ -307,32 +301,32 @@ class TestAutoJoin:
         )
         assert str(restricted_stmt) == expected
 
-    @pytest.mark.usefixtures('multiple_foos_inserted')
+    @pytest.mark.usefixtures("multiple_foos_inserted")
     def test_auto_join_to_invalid_model(self, session):
 
         stmt = select(Foo, Bar)
         loads = [
-            {'model': 'Foo', 'fields': ['count']},
-            {'model': 'Bar', 'fields': ['count']},
-            {'model': 'Qux', 'fields': ['count']},
+            {"model": "Foo", "fields": ["count"]},
+            {"model": "Bar", "fields": ["count"]},
+            {"model": "Qux", "fields": ["count"]},
         ]
 
         with pytest.raises(BadSpec) as err:
             apply_loads(stmt, loads)
 
-        assert 'The query does not contain model `Qux`.' == err.value.args[0]
+        assert "The query does not contain model `Qux`." == err.value.args[0]
 
-    @pytest.mark.usefixtures('multiple_foos_inserted')
+    @pytest.mark.usefixtures("multiple_foos_inserted")
     def test_ambiguous_query(self, session):
 
         stmt = select(Foo, Bar)
         loads = [
-            {'fields': ['count']},  # ambiguous
-            {'model': 'Bar', 'fields': ['count']},
-            {'model': 'Qux', 'fields': ['count']},
+            {"fields": ["count"]},  # ambiguous
+            {"model": "Bar", "fields": ["count"]},
+            {"model": "Qux", "fields": ["count"]},
         ]
 
         with pytest.raises(BadSpec) as err:
             apply_loads(stmt, loads)
 
-        assert 'Ambiguous spec. Please specify a model.' == err.value.args[0]
+        assert "Ambiguous spec. Please specify a model." == err.value.args[0]

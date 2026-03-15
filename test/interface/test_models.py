@@ -1,19 +1,21 @@
 import pytest
-from sqlalchemy import func, select, LABEL_STYLE_TABLENAME_PLUS_COL
-from sqlalchemy.orm import joinedload
 from packaging.version import Version
+from sqlalchemy import LABEL_STYLE_TABLENAME_PLUS_COL, func, select
+from sqlalchemy.orm import joinedload
 
-from sa_filters.exceptions import BadSpec, BadQuery
+from sa_filters.exceptions import BadQuery, BadSpec
 from sa_filters.models import (
-    auto_join, get_default_model, get_query_models, get_model_class_by_name,
-    get_model_from_spec
+    auto_join,
+    get_default_model,
+    get_model_class_by_name,
+    get_model_from_spec,
+    get_query_models,
 )
 from test import SQLALCHEMY_VERSION
-from test.models import Base, Bar, Foo, Qux
+from test.models import Bar, Base, Foo, Qux
 
 
 class TestGetQueryModels(object):
-
     def test_query_with_no_models(self, session):
         stmt = select()
 
@@ -26,70 +28,70 @@ class TestGetQueryModels(object):
 
         entities = get_query_models(stmt)
 
-        assert {'Bar': Bar} == entities
+        assert {"Bar": Bar} == entities
 
     def test_query_with_select_from_model(self, session):
         stmt = select().select_from(Bar)
 
         entities = get_query_models(stmt)
 
-        assert {'Bar': Bar} == entities
+        assert {"Bar": Bar} == entities
 
     def test_query_with_select_from_and_join_model(self, session):
         stmt = select().select_from(Bar).join(Foo)
 
         entities = get_query_models(stmt)
 
-        assert {'Bar': Bar, 'Foo': Foo} == entities
+        assert {"Bar": Bar, "Foo": Foo} == entities
 
     def test_query_with_multiple_models(self, session):
         stmt = select(Bar, Qux)
 
         entities = get_query_models(stmt)
 
-        assert {'Bar': Bar, 'Qux': Qux} == entities
+        assert {"Bar": Bar, "Qux": Qux} == entities
 
     def test_query_with_duplicated_models(self, session):
         stmt = select(Bar, Qux, Bar)
 
         entities = get_query_models(stmt)
 
-        assert {'Bar': Bar, 'Qux': Qux} == entities
+        assert {"Bar": Bar, "Qux": Qux} == entities
 
     def test_query_with_one_field(self, session):
         stmt = select(Foo.id)
 
         entities = get_query_models(stmt)
 
-        assert {'Foo': Foo} == entities
+        assert {"Foo": Foo} == entities
 
     def test_query_with_multiple_fields(self, session):
         stmt = select(Foo.id, Bar.id, Bar.name)
 
         entities = get_query_models(stmt)
 
-        assert {'Foo': Foo, 'Bar': Bar} == entities
+        assert {"Foo": Foo, "Bar": Bar} == entities
 
     def test_query_with_aggregate_func(self, session):
         stmt = select(func.count(Foo.id))
 
         entities = get_query_models(stmt)
 
-        assert {'Foo': Foo} == entities
+        assert {"Foo": Foo} == entities
 
     def test_query_with_join(self, session):
         stmt = select(Foo).join(Bar)
 
         entities = get_query_models(stmt)
 
-        assert {'Foo': Foo, 'Bar': Bar} == entities
+        assert {"Foo": Foo, "Bar": Bar} == entities
 
     def test_query_with_multiple_joins(self, session):
         stmt = select(Foo).join(Bar).join(Qux, Bar.id == Qux.id)
 
         entities = get_query_models(stmt)
 
-        assert {'Foo': Foo, 'Bar': Bar, 'Qux': Qux} == entities
+        assert {"Foo": Foo, "Bar": Bar, "Qux": Qux} == entities
 
     def test_query_with_joinedload(self, session):
         stmt = select(Foo).options(joinedload(Foo.bar))
@@ -97,61 +99,58 @@ class TestGetQueryModels(object):
         entities = get_query_models(stmt)
 
         # Bar is not added to the query since the joinedload is transparent
-        assert {'Foo': Foo} == entities
+        assert {"Foo": Foo} == entities
 
 
 class TestGetModelFromSpec:
-
     def test_query_with_no_models(self, session):
         stmt = select()
-        spec = {'field': 'name', 'op': '==', 'value': 'name_1'}
+        spec = {"field": "name", "op": "==", "value": "name_1"}
 
         with pytest.raises(BadQuery) as err:
             get_model_from_spec(spec, stmt)
 
-        assert 'The query does not contain any models.' == err.value.args[0]
+        assert "The query does not contain any models." == err.value.args[0]
 
     def test_query_with_named_model(self, session):
         stmt = select(Bar)
-        spec = {'model': 'Bar'}
+        spec = {"model": "Bar"}
 
         model = get_model_from_spec(spec, stmt)
         assert model == Bar
 
     def test_query_with_missing_named_model(self, session):
         stmt = select(Bar)
-        spec = {'model': 'Buz'}
+        spec = {"model": "Buz"}
 
         with pytest.raises(BadSpec) as err:
             get_model_from_spec(spec, stmt)
 
-        assert 'The query does not contain model `Buz`.' == err.value.args[0]
+        assert "The query does not contain model `Buz`." == err.value.args[0]
 
     def test_multiple_models_ambiquous_spec(self, session):
         stmt = select(Bar, Qux)
-        spec = {'field': 'name', 'op': '==', 'value': 'name_1'}
+        spec = {"field": "name", "op": "==", "value": "name_1"}
 
         with pytest.raises(BadSpec) as err:
             get_model_from_spec(spec, stmt)
 
-        assert 'Ambiguous spec. Please specify a model.' == err.value.args[0]
+        assert "Ambiguous spec. Please specify a model." == err.value.args[0]
 
 
 class TestGetModelClassByName:
-
     @pytest.fixture
     def registry(self):
         return Base.registry._class_registry
 
     def test_exists(self, registry):
-        assert get_model_class_by_name(registry, 'Foo') == Foo
+        assert get_model_class_by_name(registry, "Foo") == Foo
 
     def test_model_does_not_exist(self, registry):
-        assert get_model_class_by_name(registry, 'Missing') is None
+        assert get_model_class_by_name(registry, "Missing") is None
 
 
 class TestGetDefaultModel:
-
     def test_single_model_query(self, session):
         stmt = select(Foo)
         assert get_default_model(stmt) == Foo
@@ -166,10 +165,9 @@ class TestGetDefaultModel:
 
 
 class TestAutoJoin:
-
     def test_model_not_present(self, session, db_uri):
         stmt = select(Foo).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
-        stmt = auto_join(stmt, 'Bar')
+        stmt = auto_join(stmt, "Bar")
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
             join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
@@ -178,8 +176,7 @@ class TestAutoJoin:
                 "SELECT "
                 "foo.id AS foo_id, foo.name AS foo_name, "
                 "foo.count AS foo_count, foo.bar_id AS foo_bar_id \n"
-                "FROM foo {join} bar ON bar.id = foo.bar_id"
-                .format(join=join_type)
+                "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
             )
         else:
             expected = (
@@ -214,12 +211,11 @@ class TestAutoJoin:
             )
         assert str(stmt) == expected
 
-        stmt = auto_join(stmt, 'Bar')
-        assert str(stmt) == expected   # no change
+        stmt = auto_join(stmt, "Bar")
+        assert str(stmt) == expected  # no change
 
     def test_model_already_joined(self, session, db_uri):
-        stmt = select(Foo).join(Bar).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = select(Foo).join(Bar).set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
             join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
@@ -228,8 +224,7 @@ class TestAutoJoin:
                 "SELECT "
                 "foo.id AS foo_id, foo.name AS foo_name, "
                 "foo.count AS foo_count, foo.bar_id AS foo_bar_id \n"
-                "FROM foo {join} bar ON bar.id = foo.bar_id"
-                .format(join=join_type)
+                "FROM foo {join} bar ON bar.id = foo.bar_id".format(join=join_type)
             )
         else:
             expected = (
@@ -240,12 +235,15 @@ class TestAutoJoin:
             )
         assert str(stmt) == expected
 
-        stmt = auto_join(stmt, 'Bar')
-        assert str(stmt) == expected   # no change
+        stmt = auto_join(stmt, "Bar")
+        assert str(stmt) == expected  # no change
 
     def test_model_eager_joined(self, session, db_uri):
-        stmt = select(Foo).options(joinedload(Foo.bar)).\
-            set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        stmt = (
+            select(Foo)
+            .options(joinedload(Foo.bar))
+            .set_label_style(LABEL_STYLE_TABLENAME_PLUS_COL)
+        )
 
         if SQLALCHEMY_VERSION < Version("2.0.0"):
             join_type = "INNER JOIN" if "mysql" in db_uri else "JOIN"
@@ -294,7 +292,7 @@ class TestAutoJoin:
 
         assert str(stmt) == expected_eager
 
-        stmt = auto_join(stmt, 'Bar')
+        stmt = auto_join(stmt, "Bar")
         assert str(stmt) == expected_joined
 
     def test_model_does_not_exist(self, session, db_uri):
@@ -316,5 +314,5 @@ class TestAutoJoin:
             )
         assert str(stmt) == expected
 
-        stmt = auto_join(stmt, 'Missing')
-        assert str(stmt) == expected   # no change
+        stmt = auto_join(stmt, "Missing")
+        assert str(stmt) == expected  # no change

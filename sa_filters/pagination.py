@@ -3,22 +3,22 @@ import math
 from collections import namedtuple
 from typing import Optional, Union
 
-from sqlalchemy.sql import Select
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import Select
 
 from .exceptions import InvalidPage
 
 
 Pagination = namedtuple(
-    'Pagination', ['page_number', 'page_size', 'num_pages', 'total_results']
+    "Pagination", ["page_number", "page_size", "num_pages", "total_results"]
 )
 
 
 def apply_pagination(
-        stmt: Union[Select, Query],
-        page_number: Optional[int] = None,
-        page_size: Optional[int] = None,
-        total_results: int = 0
+    stmt: Union[Select, Query],
+    page_number: Optional[int] = None,
+    page_size: Optional[int] = None,
+    total_results: int = 0,
 ) -> tuple[Union[Select, Query], Pagination]:
     """Apply pagination to a SQLAlchemy :class:`sqlalchemy.sql.Select` object
     or a :class:`sqlalchemy.orm.Query` object.
@@ -82,9 +82,7 @@ def apply_pagination(
 def _limit(stmt, page_size):
     if page_size is not None:
         if page_size < 0:
-            raise InvalidPage(
-                'Page size should not be negative: {}'.format(page_size)
-            )
+            raise InvalidPage("Page size should not be negative: {}".format(page_size))
 
         stmt = stmt.limit(page_size)
 
@@ -94,9 +92,7 @@ def _limit(stmt, page_size):
 def _offset(stmt, page_number, page_size):
     if page_number is not None:
         if page_number < 1:
-            raise InvalidPage(
-                'Page number should be positive: {}'.format(page_number)
-            )
+            raise InvalidPage("Page number should be positive: {}".format(page_number))
 
         stmt = stmt.offset((page_number - 1) * page_size)
 

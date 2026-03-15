@@ -2,6 +2,7 @@
 from packaging.version import parse
 from sqlalchemy import __version__
 
+
 SQLALCHEMY_VERSION = parse(__version__)
 
 

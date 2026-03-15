@@ -1,16 +1,16 @@
-from sqlalchemy.exc import InvalidRequestError
-from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import mapperlib, Query
-from sqlalchemy.sql.util import find_tables
-from sqlalchemy import Table
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 import types
 
-from .exceptions import BadQuery, FieldNotFound, BadSpec
+from sqlalchemy import Table
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import Query, mapperlib
+from sqlalchemy.sql.util import find_tables
+
+from .exceptions import BadQuery, BadSpec, FieldNotFound
 
 
 class Field(object):
-
     def __init__(self, model, field_name):
         self.model = model
         self.field_name = field_name
@@ -18,9 +18,7 @@ class Field(object):
     def get_sqlalchemy_field(self):
         if self.field_name not in self._get_valid_field_names():
             raise FieldNotFound(
-                'Model {} has no column `{}`.'.format(
-                    self.model, self.field_name
-                )
+                "Model {} has no column `{}`.".format(self.model, self.field_name)
             )
         sqlalchemy_field = getattr(self.model, self.field_name)
 
@@ -38,7 +36,8 @@ class Field(object):
 
         column_names = columns.keys()
         hybrid_names = [
-            key for key, item in orm_descriptors.items()
+            key
+            for key, item in orm_descriptors.items()
             if type(item) in [hybrid_property, hybrid_method]
         ]
 
@@ -96,7 +95,7 @@ def get_query_models(query):
 
 
 def get_model_from_spec(spec, query, default_model=None):
-    """ Determine the model to which a spec applies on a given query.
+    """Determine the model to which a spec applies on a given query.
 
     A spec that does not specify a model may be applied to a query that
     contains a single model. Otherwise the spec must specify the model to
@@ -121,19 +120,17 @@ def get_model_from_spec(spec, query, default_model=None):
     """
     models = get_query_models(query)
     if not models:
-        raise BadQuery('The query does not contain any models.')
+        raise BadQuery("The query does not contain any models.")
 
-    model_name = spec.get('model')
+    model_name = spec.get("model")
     if "table" in spec:
-        model = get_class_by_tablename(spec.get('table'))
+        model = get_class_by_tablename(spec.get("table"))
         model_name = model.__name__
 
     if model_name is not None:
         models = [v for (k, v) in models.items() if k == model_name]
         if not models:
-            raise BadSpec(
-                'The query does not contain model `{}`.'.format(model_name)
-            )
+            raise BadSpec("The query does not contain model `{}`.".format(model_name))
         model = models[0]
     else:
         if len(models) == 1:
@@ -147,27 +144,26 @@ def get_model_from_spec(spec, query, default_model=None):
 
 
 def get_model_class_by_name(registry, name):
-    """ Return the model class matching `name` in the given `registry`.
-    """
+    """Return the model class matching `name` in the given `registry`."""
     for cls in registry.values():
-        if getattr(cls, '__name__', None) == name:
+        if getattr(cls, "__name__", None) == name:
             return cls
 
 
 def get_default_model(query):
-    """ Return the singular model from `query`, or `None` if `query` contains
+    """Return the singular model from `query`, or `None` if `query` contains
     multiple models.
     """
     query_models = get_query_models(query).values()
     if len(query_models) == 1:
-        default_model, = iter(query_models)
+        (default_model,) = iter(query_models)
     else:
         default_model = None
     return default_model
 
 
 def auto_join(query, *model_names):
-    """ Automatically join models to `query` if they're not already present
+    """Automatically join models to `query` if they're not already present
     and the join can be done implicitly.
     """
     # every model has access to the registry, so we can use any from the query
