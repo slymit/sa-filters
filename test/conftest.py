@@ -19,14 +19,14 @@ def pytest_addoption(parser):
         action="store",
         dest=SQLITE_TEST_DB_URI,
         default="sqlite+pysqlite:///test_sa_filters.db",
-        help=('DB uri for testing (e.g. "sqlite+pysqlite:///test_sa_filters.db")'),
+        help='DB uri for testing (e.g. "sqlite+pysqlite:///test_sa_filters.db")',
     )
 
     parser.addoption(
         "--mysql-test-db-uri",
         action="store",
         dest=MYSQL_TEST_DB_URI,
-        default=("mysql+mysqlconnector://root:@localhost:3306/test_sa_filters"),
+        default="mysql+mysqlconnector://root:@localhost:3306/test_sa_filters",
         help=(
             "DB uri for testing (e.g. "
             '"mysql+mysqlconnector://username:password@localhost:3306'

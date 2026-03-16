@@ -1142,7 +1142,7 @@ class TestApplyArrayFilters:
 class TestHybridAttributes:
     @pytest.mark.usefixtures("multiple_bars_inserted")
     @pytest.mark.parametrize(
-        ("field, expected_error"),
+        "field, expected_error",
         [
             ("foos", "Model <class 'test.models.Bar'> has no column `foos`."),
             (
