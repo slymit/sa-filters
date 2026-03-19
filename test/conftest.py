@@ -61,8 +61,7 @@ def config(request):
 
 def test_db_keys():
     """Decide what DB backends to use to run the tests."""
-    test_db_uris = []
-    test_db_uris.append(SQLITE_TEST_DB_URI)
+    test_db_uris = [SQLITE_TEST_DB_URI]
 
     try:
         import mysql  # noqa: F401
