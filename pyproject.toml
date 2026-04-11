@@ -71,22 +71,26 @@ force-single-line = false
 lines-after-imports = 2
 
 [tool.tox]
-legacy_tox_ini = """
-    [tox]
-    minversion = 4.6.4
-    envlist = {py310,py311,py312,py313,py314}-sqlalchemy{1.4,2.0}
+min_version = "4.6.4"
+env_list = [
+  "py310-sqlalchemy1.4", "py310-sqlalchemy2.0",
+  "py311-sqlalchemy1.4", "py311-sqlalchemy2.0",
+  "py312-sqlalchemy1.4", "py312-sqlalchemy2.0",
+  "py313-sqlalchemy1.4", "py313-sqlalchemy2.0",
+  "py314-sqlalchemy1.4", "py314-sqlalchemy2.0"
+]
 
-    [testenv]
-    allowlist_externals = make
-    usedevelop = true
-    extras =
-        dev
-        mysql
-        postgresql
-    deps =
-        {py310,py311,py312,py313,py314}: pytest~=5.4.1
-        sqlalchemy1.4: sqlalchemy>=1.4,<2.0
-        sqlalchemy2.0: sqlalchemy>=2.0
-    commands =
-        make coverage ARGS='--junitxml=junit.xml -o junit_family=legacy -x -vv'
-"""
+[tool.tox.env_run_base]
+allowlist_externals = ["make"]
+usedevelop = true
+extras = ["dev", "mysql", "postgresql"]
+deps = ["pytest~=5.4.1"]
+commands = [
+  ["make", "coverage", "ARGS=--junitxml=junit.xml -o junit_family=legacy -x -vv"]
+]
+
+[tool.tox.env."py{310,311,312,313,314}-sqlalchemy1.4"]
+deps = ["pytest~=5.4.1", "sqlalchemy>=1.4,<2.0"]
+
+[tool.tox.env."py{310,311,312,313,314}-sqlalchemy2.0"]
+deps = ["pytest~=5.4.1", "sqlalchemy>=2.0"]
